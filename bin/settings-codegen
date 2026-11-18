@@ -1,0 +1,24 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloaders = [
+    $GLOBALS['_composer_autoload_path'] ?? null,
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+foreach ($autoloaders as $autoloader) {
+    if (is_string($autoloader) && is_file($autoloader)) {
+        require $autoloader;
+        break;
+    }
+}
+
+if (! class_exists(Tikhomirov\SettingsCodegen\Cli\Application::class)) {
+    fwrite(STDERR, "settings-codegen: Composer autoloader not found. Run composer install.\n");
+    exit(2);
+}
+
+exit((new Tikhomirov\SettingsCodegen\Cli\Application())->run(array_slice($argv, 1)));
