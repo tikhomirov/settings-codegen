@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
+[Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- `settings.json` loader with validation (`resources/settings.schema.json` for IDEs), key aliases,
+  prefix stripping and explicit module names.
+- Deterministic PHP exporter with optional Pint-compatible arrow alignment and `var_export` flavour.
+- Adapters: `wordpress` (Config + WooCommerce UiSchema with `__()`), `laravel`, `symfony`, `yii3`
+  (Config with `load()`, `fromArray()` and `toArray()`, plus a Definition class with fields,
+  defaults, rules and keys). Custom readers and custom adapters are supported.
+- Extension API (reserved keys, validation, class and property attributes) and post steps.
+- `bin/settings-codegen generate [--check]`, a Symfony console command with an optional bundle,
+  and a Yii3 `yiisoft/config` plugin.
