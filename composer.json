@@ -1,0 +1,61 @@
+{
+    "name": "tikhomirov/settings-codegen",
+    "description": "Schema-first settings: generate typed readonly PHP config classes (and admin UI schemas) from settings.json for WordPress/WooCommerce, Laravel, Symfony and Yii3.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["settings", "codegen", "code-generation", "schema", "dto", "wordpress", "woocommerce", "laravel", "symfony", "yii3"],
+    "authors": [
+        {
+            "name": "Aleksei Tikhomirov",
+            "email": "alex@rwsite.ru"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^10.5 || ^11.0 || ^12.0",
+        "symfony/console": "^6.4 || ^7.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0"
+    },
+    "suggest": {
+        "symfony/console": "Run generation as a console command (Symfony bundle or Yii3 console).",
+        "symfony/http-kernel": "Register SettingsCodegenBundle in a Symfony application.",
+        "yiisoft/config": "Pick up the bundled config-plugin in a Yii3 application.",
+        "yiisoft/yii-console": "Run settings:generate from the Yii3 console."
+    },
+    "autoload": {
+        "psr-4": {
+            "Tikhomirov\\SettingsCodegen\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tikhomirov\\SettingsCodegen\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/settings-codegen"
+    ],
+    "scripts": {
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "check": [
+            "@test",
+            "@phpstan"
+        ]
+    },
+    "extra": {
+        "config-plugin": {
+            "params-console": "config/yii3/params-console.php"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}
