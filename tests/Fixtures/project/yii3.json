@@ -1,0 +1,8 @@
+{
+    "adapter": "yii3",
+    "schemas": ["modules/*/settings.json"],
+    "namespace": "Fixture\\Yii3\\{module}",
+    "output": "build/yii3/{module}",
+    "key_prefix": "app.settings.",
+    "strip_prefixes": ["shop_"]
+}

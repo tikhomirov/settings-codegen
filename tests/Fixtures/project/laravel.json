@@ -1,0 +1,8 @@
+{
+    "adapter": "laravel",
+    "schemas": ["modules/*/settings.json"],
+    "namespace": "Fixture\\Laravel\\{module}",
+    "output": "build/laravel/{module}",
+    "key_prefix": "settings.",
+    "strip_prefixes": ["shop_"]
+}

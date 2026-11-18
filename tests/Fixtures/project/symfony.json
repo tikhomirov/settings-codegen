@@ -1,0 +1,8 @@
+{
+    "adapter": "symfony",
+    "schemas": ["modules/*/settings.json"],
+    "namespace": "Fixture\\Symfony\\{module}",
+    "output": "build/symfony/{module}",
+    "key_prefix": "app.settings.",
+    "strip_prefixes": ["shop_"]
+}

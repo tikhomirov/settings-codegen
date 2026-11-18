@@ -1,0 +1,12 @@
+{
+    "adapter": "wordpress",
+    "schemas": ["modules/*/settings.json"],
+    "namespace": "Fixture\\WordPressPint\\{module}",
+    "output": "build/wordpress-pint/{module}",
+    "option_reader": "fixture_get_option",
+    "text_domain": "fixture",
+    "strip_prefixes": ["shop_"],
+    "readonly_class": false,
+    "style": {"align_arrows": true, "list_keys": true, "empty_array": "multiline"},
+    "docs": {"config_class": "Settings of {module} ({file})."}
+}

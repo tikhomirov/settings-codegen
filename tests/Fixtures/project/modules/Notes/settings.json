@@ -1,0 +1,17 @@
+[
+    {
+        "id": "notes_title",
+        "type": "title",
+        "title": "Notes"
+    },
+    {
+        "id": "notes_info",
+        "type": "info",
+        "text": "Nothing to configure yet: %s",
+        "text_args_expr": ["'—'"]
+    },
+    {
+        "id": "notes_end",
+        "type": "sectionend"
+    }
+]

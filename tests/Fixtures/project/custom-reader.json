@@ -1,0 +1,10 @@
+{
+    "adapter": "laravel",
+    "schemas": ["modules/Delivery/settings.json"],
+    "namespace": "Fixture\\Custom",
+    "output": "build/custom",
+    "strip_prefixes": ["shop_"],
+    "definition": false,
+    "readonly_class": false,
+    "reader": {"type": "\\Fixture\\SettingsStore", "variable": "store", "expression": "{var}->get({key})"}
+}

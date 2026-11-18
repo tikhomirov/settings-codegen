@@ -1,0 +1,12 @@
+{
+    "adapter": "wordpress",
+    "schemas": ["modules/*/settings.json"],
+    "namespace": "Fixture\\WordPress\\{module}",
+    "output": "build/wordpress/{module}",
+    "option_reader": "fixture_get_option",
+    "text_domain": "fixture",
+    "strip_prefixes": ["shop_"],
+    "bootstrap": ["codegen/bootstrap.php"],
+    "extensions": ["Fixture\\Codegen\\ModesExtension"],
+    "post_steps": [{"class": "Fixture\\Codegen\\RegistryPostStep", "options": {"path": "build/wordpress/registry.php"}}]
+}
