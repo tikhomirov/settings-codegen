@@ -1,4 +1,8 @@
-# settings-codegen
+<p align="center"><img src="docs/assets/logo.png" alt="settings-codegen" width="640"></p>
+
+<p align="center"><b>Describe settings once in <code>settings.json</code> — get typed PHP classes, admin UI fields and validation, checked in CI.</b></p>
+
+<p align="center">
 
 [![CI](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
 [![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
@@ -6,19 +10,143 @@
 [![PHP 8.1–8.5](https://img.shields.io/badge/PHP-8.1%20%E2%80%93%208.5-777bb4)](composer.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Schema-first settings for PHP. Describe the settings of a module once in `settings.json`, then
-generate:
+</p>
 
-- a typed `readonly` **Config class** for business code (no `mixed`, no string keys, IDE autocomplete);
-- framework glue: a **WooCommerce Settings API** array with `__()` calls for WordPress, or a
-  **Definition** class (fields, defaults, validation rules) for Laravel, Symfony and Yii3.
+# settings-codegen
 
-The generator is a dev tool. Generated files are plain PHP that you commit, so production needs
-neither this package nor any parsing at runtime (OPcache does the rest). `--check` fails CI when
-someone edits `settings.json` and forgets to regenerate.
+## The problem
 
-The idea is described in detail (in Russian) in
-[“PHP settings architecture: why constants are a dead end, and why JSON”](https://rwsite.ru/php-settings-architecture-why-constants-are-a-dead-end-and-why-json/).
+Settings in a growing PHP project tend to look like this:
+
+```php
+$restTime = get_option('iiko_rest_time', '00:30');                 // mixed
+$enabled  = get_option('iiko_enable_calendar', 'yes') === 'yes';   // "yes", "1", true, "on"…?
+$interval = (int) get_option('iiko_time_slot_interval', 30);       // cast again, everywhere
+```
+
+- **String keys everywhere.** A typo like `'iiko_rest_tiem'` silently returns the default; PHPStan can't see it.
+- **Everything is `mixed`.** `get_option()` / `config()` return `"0"`, `0`, `false` or `"no"`, so every call site casts by hand.
+- **Defaults are duplicated.** `'00:30'` lives in the code *and* in the admin form definition. Change one, forget the other.
+- **A global `SettingsKey` constants class** gives autocomplete for key names only, stays `mixed`, and becomes a God Object every module depends on.
+- **UI and code drift apart.** The admin form, the validation rules and the code that reads the values are three separate lists.
+
+## The solution: schema first
+
+**1. Describe the module once**, next to its code — `src/Features/DeliveryCalendar/settings.json`:
+
+```json
+[
+    {"id": "iiko_calendar_title", "type": "title", "title": "Delivery calendar"},
+    {"id": "iiko_enable_calendar", "property": "enableCalendar", "php_type": "bool",
+     "type": "checkbox", "title": "Enable delivery time picker", "default": "yes"},
+    {"id": "iiko_rest_time", "property": "restTime",
+     "type": "text", "title": "Order preparation time", "default": "00:30"},
+    {"id": "iiko_time_slot_duration", "property": "timeSlotDuration", "php_type": "int",
+     "type": "number", "title": "Time slot, minutes", "default": 30},
+    {"id": "iiko_calendar_end", "type": "sectionend"}
+]
+```
+
+**2. Generate:**
+
+```bash
+vendor/bin/settings-codegen generate
+```
+
+**3. Get plain, committed PHP** (real output of the `wordpress` adapter, shortened):
+
+```php
+final readonly class DeliveryCalendarConfig
+{
+    public function __construct(
+        public bool $enableCalendar,
+        public string $restTime,
+        public int $timeSlotDuration,
+    ) {}
+
+    public static function load(): self
+    {
+        return new self(
+            enableCalendar: self::asBool(\get_option('iiko_enable_calendar', 'yes')),
+            restTime: (string) \get_option('iiko_rest_time', '00:30'),
+            timeSlotDuration: (int) \get_option('iiko_time_slot_duration', 30),
+        );
+    }
+    // toArray(), asBool()
+}
+
+final class DeliveryCalendarUiSchema
+{
+    public static function getFields(): array   // WooCommerce Settings API, ready for the settings tab
+    {
+        return [
+            // ...
+            ['id' => 'iiko_rest_time', 'title' => \__('Order preparation time', 'acme'), 'type' => 'text', 'default' => '00:30'],
+            // ...
+        ];
+    }
+    // getAllOptionKeys(), optionIdFor()
+}
+```
+
+**4. Use typed values with full autocomplete:**
+
+```php
+$config = DeliveryCalendarConfig::load();
+
+if ($config->enableCalendar) {             // bool, not "yes"
+    $slots->build($config->restTime, $config->timeSlotDuration);
+}
+
+$config->restTme;                          // PHPStan: Access to an undefined property
+
+add_filter('woocommerce_get_settings_acme', fn () => DeliveryCalendarUiSchema::getFields());
+```
+
+Business code depends on a plain object, so unit tests need no database and no WordPress:
+
+```php
+public function test_calculates_slots(): void
+{
+    $config = new DeliveryCalendarConfig(enableCalendar: true, restTime: '01:00', timeSlotDuration: 30);
+
+    $calculator = new CalendarSlotCalculator($config);   // your service
+    $slots = $calculator->calculateForDay(new DateTimeImmutable('2026-10-15'));
+
+    $this->assertCount(16, $slots);
+}
+```
+
+**5. Keep it honest in CI:** `vendor/bin/settings-codegen generate --check` exits with `1` when
+someone changed `settings.json` and forgot to regenerate.
+
+```mermaid
+flowchart LR
+    S["settings.json<br/>(one per module)"] --> G["settings-codegen generate"]
+    G --> C["*Config<br/>typed readonly DTO"]
+    G --> U["*UiSchema<br/>WooCommerce fields + __()"]
+    G --> D["*Definition<br/>fields / defaults / rules"]
+    C --> A["Your code<br/>$config->restTime"]
+    U --> W["Admin settings page"]
+    D --> V["Validation, forms"]
+    S -. "generate --check" .-> CI["CI fails on drift"]
+```
+
+## Why use it
+
+- **Single source of truth.** Key, type, default, label and validation rules of a setting live in one JSON entry.
+- **Type-safe DTOs.** `bool`, `int`, `float`, `string`, `array` properties in a `final readonly` class instead of `mixed`.
+- **100% IDE autocomplete** for every setting — no string keys in business code.
+- **PHPStan catches typos**: a misspelled property is an error, a misspelled string key never was.
+- **Defaults and validation in one place**: `UiSchema::getFields()` / `Definition::defaults()` and `rules()` come from the same schema as the Config class.
+- **CI drift check** with `generate --check` (exit codes `0` / `1` / `2`).
+- **Zero runtime overhead.** A dev-only dependency: production runs plain generated PHP, cached by OPcache — no JSON parsing, no reflection.
+- **Framework-agnostic.** Adapters for WordPress/WooCommerce, Laravel, Symfony and Yii3, or your own `AdapterInterface`.
+
+Read the full rationale (in Russian) →
+[“PHP settings architecture: why constants are a dead end, and why JSON”](https://rwsite.ru/php-settings-architecture-why-constants-are-a-dead-end-and-why-json/)
+
+## Requirements
 
 - PHP 8.1+, tested on 8.1, 8.2, 8.3, 8.4 and 8.5 (generated `readonly class` needs 8.2; set
   `"readonly_class": false` for 8.1).
@@ -28,6 +156,10 @@ The idea is described in detail (in Russian) in
 
 ## Contents
 
+- [The problem](#the-problem)
+- [The solution: schema first](#the-solution-schema-first)
+- [Why use it](#why-use-it)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [The schema](#the-schema)
 - [Configuration](#configuration)
