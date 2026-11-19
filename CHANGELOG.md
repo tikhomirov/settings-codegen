@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-19
+
+Packaging and documentation only, no code changes.
+
+### Changed
+
+- `composer.json`: description and keywords mention MoonShine; added `homepage` and `support`
+  (issues, source, security).
+- README: centered header (banner, title, tagline, badges in one line), Packagist version and
+  downloads badges, absolute banner URL so it also shows on Packagist, `composer require` as the
+  main installation path.
+- Added `SECURITY.md` and `CONTRIBUTING.md` (not in the dist archive); `.gitattributes` normalizes
+  line endings.
+
 ## [0.1.0] - 2026-11-19
 
 First release.
@@ -44,5 +58,6 @@ First release.
   a Mermaid diagram, the benefits and a link to the full rationale; package banner
   (`docs/assets/logo.jpg`, not in the dist archive).
 
-[Unreleased]: https://github.com/tikhomirov/settings-codegen/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/tikhomirov/settings-codegen/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/tikhomirov/settings-codegen/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tikhomirov/settings-codegen/releases/tag/v0.1.0

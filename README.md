@@ -1,18 +1,20 @@
-<p align="center"><img src="docs/assets/logo.jpg" alt="settings-codegen: a settings array turned into a typed Config" width="100%"></p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/tikhomirov/settings-codegen/main/docs/assets/logo.jpg" alt="settings-codegen: a settings array turned into a typed Config" width="100%">
+</p>
+
+<h1 align="center">settings-codegen</h1>
 
 <p align="center"><b>Describe settings once in <code>settings.json</code> — get typed PHP classes, admin UI fields and validation, checked in CI.</b></p>
 
 <p align="center">
-
-[![CI](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
-[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
-[![PHPStan level 9](https://img.shields.io/badge/PHPStan-level%209-brightgreen)](phpstan.neon.dist)
-[![PHP 8.1–8.5](https://img.shields.io/badge/PHP-8.1%20%E2%80%93%208.5-777bb4)](composer.json)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-
+  <a href="https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml"><img src="https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="Coverage 100%"></a>
+  <a href="https://github.com/tikhomirov/settings-codegen/blob/main/phpstan.neon.dist"><img src="https://img.shields.io/badge/PHPStan-level%209-brightgreen" alt="PHPStan level 9"></a>
+  <a href="https://github.com/tikhomirov/settings-codegen/blob/main/composer.json"><img src="https://img.shields.io/badge/PHP-8.1%20%E2%80%93%208.5-777bb4" alt="PHP 8.1–8.5"></a>
+  <a href="https://packagist.org/packages/tikhomirov/settings-codegen"><img src="https://img.shields.io/packagist/v/tikhomirov/settings-codegen" alt="Latest version"></a>
+  <a href="https://packagist.org/packages/tikhomirov/settings-codegen"><img src="https://img.shields.io/packagist/dt/tikhomirov/settings-codegen" alt="Downloads"></a>
+  <a href="https://github.com/tikhomirov/settings-codegen/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
 </p>
-
-# settings-codegen
 
 ## The problem
 
@@ -242,7 +244,7 @@ Read the full rationale (in Russian) →
 composer require --dev tikhomirov/settings-codegen
 ```
 
-The package is not on Packagist yet. Until then, add the GitHub repository first:
+Without Packagist (a fork or a mirror), add the repository first:
 
 ```bash
 composer config repositories.settings-codegen vcs https://github.com/tikhomirov/settings-codegen
@@ -763,8 +765,10 @@ UPDATE_GOLDEN=1 composer test   # after an intended output change; review the di
 ```
 
 CI runs the tests on PHP 8.1, 8.2, 8.3, 8.4 and 8.5 (plus lowest dependencies on 8.1) with
-`E_ALL` and PHPUnit failing on any warning, notice or deprecation, runs the CLI for every adapter
-to make sure it prints no deprecations, runs PHPStan, and a coverage job on PHP 8.3 with pcov that fails if line, method or class coverage drops below 100%. The Symfony
+`E_ALL` and PHPUnit failing on any warning, notice or deprecation, and runs the CLI for every
+adapter to make sure it prints no deprecations. Separate jobs check the generated MoonShine fields
+against the real MoonShine API (PHP 8.2–8.5), run PHPStan and `composer validate --strict`, and
+measure coverage on PHP 8.3 with pcov, failing below 100% lines, methods and classes. The Symfony
 packages are in `require-dev`, so the bundle and the console command are covered too; there are no
 coverage exclusions.
 

@@ -1,15 +1,36 @@
 {
     "name": "tikhomirov/settings-codegen",
-    "description": "Schema-first settings: generate typed readonly PHP config classes (and admin UI schemas) from settings.json for WordPress/WooCommerce, Laravel, Symfony and Yii3.",
+    "description": "Schema-first settings: generate typed readonly PHP config classes and admin UI fields from settings.json for WordPress/WooCommerce, Laravel, Symfony, Yii3 and MoonShine.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["settings", "codegen", "code-generation", "schema", "dto", "wordpress", "woocommerce", "laravel", "symfony", "yii3"],
+    "keywords": [
+        "settings",
+        "configuration",
+        "config",
+        "codegen",
+        "code-generation",
+        "schema",
+        "typed-config",
+        "dto",
+        "wordpress",
+        "woocommerce",
+        "laravel",
+        "symfony",
+        "yii3",
+        "moonshine"
+    ],
+    "homepage": "https://github.com/tikhomirov/settings-codegen",
     "authors": [
         {
             "name": "Aleksei Tikhomirov",
             "email": "alex@rwsite.ru"
         }
     ],
+    "support": {
+        "issues": "https://github.com/tikhomirov/settings-codegen/issues",
+        "source": "https://github.com/tikhomirov/settings-codegen",
+        "security": "https://github.com/tikhomirov/settings-codegen/security/policy"
+    },
     "require": {
         "php": ">=8.1",
         "ext-json": "*",
