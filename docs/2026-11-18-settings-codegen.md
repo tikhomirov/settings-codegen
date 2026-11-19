@@ -111,3 +111,13 @@ https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
 - CI для 716cce8 зелёный на всех версиях:
   https://github.com/tikhomirov/settings-codegen/actions/runs/44482441868
   На 8.1 пропущено 7 тестов: сгенерированные readonly-классы требуют 8.2.
+
+## 8. README: зачем нужен пакет (2026-11-19)
+
+- Верх README переписан: эмблема `docs/assets/logo.png` (1280×720, pngquant, 185 КБ, в dist не входит),
+  одна строка-суть, бейджи, «The problem», «The solution: schema first» (до/после на примере
+  DeliveryCalendar: settings.json → `generate` → реальный вывод адаптера wordpress, сокращённый →
+  `$config->restTime`, unit-тест без БД), Mermaid-схема, «Why use it», ссылка на статью.
+  Установка, адаптеры, CLI и раздел для AI-агентов идут после.
+- Утверждения сверены с кодом: вывод получен реальным запуском генератора, ошибка PHPStan
+  `Access to an undefined property` проверена на level 9.
