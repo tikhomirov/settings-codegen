@@ -56,3 +56,16 @@ CI и README. Проверить совместимость с woo2iiko, нич�
 - ccfaa8e test: add golden files for all adapters, runtime, CLI and unit tests
 - c5efce0 ci: add GitHub Actions workflow for tests and PHPStan
 - bfb8e90 docs: add README with WordPress, Laravel, Symfony and Yii3 examples and CHANGELOG
+
+## 5. Доработка под edakit (2026-11-19)
+
+Ветка `feat/edakit-compat`. Две опции типизированных адаптеров (laravel, symfony, yii3), чтобы
+перевести edakit на пакет без изменения поведения в рантайме:
+
+- `string_cast`: `scalar` (по умолчанию), `string`, `non_empty_string`. У edakit пустая строка
+  и не-строки в хранилище дают default — это `non_empty_string`.
+- `definition_fields`: `normalized` (по умолчанию) или `source`. При `source` `Definition::fields()`
+  отдаёт поля как в settings.json, до `key_aliases`. edakit хранит `key`/`type`, рантайм читает
+  именно их, а генератору они подаются алиасами `id`/`php_type`.
+
+Тесты: `tests/Integration/TypedAdapterOptionsTest.php`. Golden-файлы не менялись.

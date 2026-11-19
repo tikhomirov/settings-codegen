@@ -74,6 +74,7 @@ final class SchemaLoader
             throw new SchemaException("Invalid JSON in {$relative}: {$e->getMessage()}", 0, $e);
         }
 
+        $source = $data;
         $data = $this->applyAliases($data);
         $errors = ($this->validator ?? new SchemaValidator())->validate($data);
 
@@ -81,14 +82,7 @@ final class SchemaLoader
             throw SchemaException::invalid($relative, $errors);
         }
 
-        $entries = [];
-        foreach (is_array($data) ? $data : [] as $entry) {
-            $object = [];
-            foreach (is_array($entry) ? $entry : [] as $key => $value) {
-                $object[(string) $key] = $value;
-            }
-            $entries[] = $object;
-        }
+        $entries = self::objects($data);
 
         $settings = [];
 
@@ -117,7 +111,26 @@ final class SchemaLoader
             throw new SchemaException("Module name \"{$name}\" derived from {$relative} is not a valid class name prefix. Use \"module_names\".");
         }
 
-        return new Module($name, $file, $relative, $entries, $settings);
+        return new Module($name, $file, $relative, $entries, $settings, self::objects($source));
+    }
+
+    /**
+     * Validated schema data as a list of string-keyed entries.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function objects(mixed $data): array
+    {
+        $entries = [];
+        foreach (is_array($data) ? $data : [] as $entry) {
+            $object = [];
+            foreach (is_array($entry) ? $entry : [] as $key => $value) {
+                $object[(string) $key] = $value;
+            }
+            $entries[] = $object;
+        }
+
+        return $entries;
     }
 
     public function storageKey(string $id): string
