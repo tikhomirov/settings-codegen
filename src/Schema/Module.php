@@ -31,9 +31,4 @@ final class Module
     ) {
         $this->sourceEntries = $sourceEntries ?? $entries;
     }
-
-    public function hasSettings(): bool
-    {
-        return $this->settings !== [];
-    }
 }

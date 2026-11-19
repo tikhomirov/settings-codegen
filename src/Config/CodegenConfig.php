@@ -168,15 +168,7 @@ final class CodegenConfig
         return str_starts_with($absolute, $prefix) ? substr($absolute, strlen($prefix)) : $absolute;
     }
 
-    public function has(string $key): bool
-    {
-        return array_key_exists($key, $this->options);
-    }
 
-    public function get(string $key, mixed $default = null): mixed
-    {
-        return $this->options[$key] ?? $default;
-    }
 
     public function string(string $key, string $default = ''): string
     {
@@ -200,23 +192,6 @@ final class CodegenConfig
         return $value;
     }
 
-    /**
-     * Lines of text: accepts a string (split on "\n") or a list of strings.
-     *
-     * @param list<string> $default
-     *
-     * @return list<string>
-     */
-    public function lines(string $key, array $default): array
-    {
-        $value = $this->options[$key] ?? null;
-
-        if (is_string($value)) {
-            return explode("\n", $value);
-        }
-
-        return $value === null ? $default : $this->stringList($key, $default);
-    }
 
     /**
      * @param list<string> $default

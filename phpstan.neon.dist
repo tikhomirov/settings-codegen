@@ -4,4 +4,5 @@ parameters:
         - src
         - bin/settings-codegen
         - config
+        - tools
     tmpDir: build/phpstan

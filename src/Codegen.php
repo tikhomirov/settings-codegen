@@ -86,11 +86,11 @@ final class Codegen
             }
 
             $dir = dirname($file->path);
-            if (! is_dir($dir) && ! mkdir($dir, 0o775, true) && ! is_dir($dir)) {
+            if (! is_dir($dir) && ! @mkdir($dir, 0o775, true) && ! is_dir($dir)) {
                 throw new \RuntimeException("Cannot create directory {$dir}");
             }
 
-            if (file_put_contents($file->path, $file->contents) === false) {
+            if (@file_put_contents($file->path, $file->contents) === false) {
                 throw new \RuntimeException("Cannot write {$file->path}");
             }
         }
@@ -106,11 +106,6 @@ final class Codegen
         $files = $this->build();
 
         return new Result($files, $this->diff($files), $this->countModules());
-    }
-
-    public function config(): CodegenConfig
-    {
-        return $this->config;
     }
 
     /**

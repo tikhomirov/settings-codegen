@@ -30,6 +30,8 @@ final class SchemaValidatorTest extends TestCase
         yield 'duplicate id' => [[['id' => 'a', 'property' => 'a'], ['id' => 'a', 'property' => 'b']], 'duplicate id "a"'];
         yield 'bad php_type' => [[['id' => 'a', 'property' => 'a', 'php_type' => 'object']], 'php_type: expected one of'];
         yield 'bad args' => [[['id' => 'a', 'desc_args_expr' => 'x']], 'desc_args_expr: expected a list'];
+        yield 'non-string arg' => [[['id' => 'a', 'text_args_expr' => ['ok', 1]]], 'text_args_expr: expected a list'];
+        yield 'non-string property' => [[['id' => 'a', 'property' => 5]], 'property: expected a non-empty string'];
         yield 'empty expr' => [[['id' => 'a', 'options_expr' => '']], 'options_expr: expected a non-empty string'];
         yield 'bad ui' => [[['id' => 'a', 'ui' => 'no']], 'ui: expected a boolean or an object'];
         yield 'int default' => [[['id' => 'a', 'property' => 'a', 'php_type' => 'int', 'default' => 'x']], 'expected a number'];
