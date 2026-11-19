@@ -23,3 +23,5 @@ All notable changes to this project are documented here. The format follows
   for contributors; README section "For AI agents".
 - Quality gates: PHPStan level 9 without a baseline, 100% line, method and class coverage enforced
   in CI (`composer coverage`, PHP 8.3 + pcov, `tools/coverage-check.php`).
+- PHP 8.5 support: CI matrix PHP 8.1–8.5; PHPUnit fails on warnings, notices and deprecations,
+  and CI runs the CLI for every adapter with `E_ALL` to catch deprecations.

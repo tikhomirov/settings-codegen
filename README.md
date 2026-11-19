@@ -3,7 +3,7 @@
 [![CI](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
 [![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
 [![PHPStan level 9](https://img.shields.io/badge/PHPStan-level%209-brightgreen)](phpstan.neon.dist)
-[![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4)](composer.json)
+[![PHP 8.1–8.5](https://img.shields.io/badge/PHP-8.1%20%E2%80%93%208.5-777bb4)](composer.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Schema-first settings for PHP. Describe the settings of a module once in `settings.json`, then
@@ -20,7 +20,8 @@ someone edits `settings.json` and forgets to regenerate.
 The idea is described in detail (in Russian) in
 [“PHP settings architecture: why constants are a dead end, and why JSON”](https://rwsite.ru/php-settings-architecture-why-constants-are-a-dead-end-and-why-json/).
 
-- PHP 8.1+ (generated `readonly class` needs 8.2; set `"readonly_class": false` for 8.1).
+- PHP 8.1+, tested on 8.1, 8.2, 8.3, 8.4 and 8.5 (generated `readonly class` needs 8.2; set
+  `"readonly_class": false` for 8.1).
 - No runtime dependencies. Framework packages are only suggested.
 - Deterministic output: stable order and formatting. You don't need a code style fixer, but the
   output can match one (see `style`).
@@ -435,8 +436,9 @@ composer check     # test + phpstan
 UPDATE_GOLDEN=1 composer test   # after an intended output change; review the diff
 ```
 
-CI runs the tests on PHP 8.1–8.4 (highest and lowest dependencies), PHPStan, and a coverage job
-on PHP 8.3 with pcov that fails if line, method or class coverage drops below 100%. The Symfony
+CI runs the tests on PHP 8.1, 8.2, 8.3, 8.4 and 8.5 (plus lowest dependencies on 8.1) with
+`E_ALL` and PHPUnit failing on any warning, notice or deprecation, runs the CLI for every adapter
+to make sure it prints no deprecations, runs PHPStan, and a coverage job on PHP 8.3 with pcov that fails if line, method or class coverage drops below 100%. The Symfony
 packages are in `require-dev`, so the bundle and the console command are covered too; there are no
 coverage exclusions.
 

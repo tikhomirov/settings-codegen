@@ -3,7 +3,7 @@
 Notes for AI agents working on **this package**. To *use* the package in a project, see
 [`skills/settings-codegen/SKILL.md`](skills/settings-codegen/SKILL.md).
 
-- PHP 8.1+, no runtime dependencies in `src/` except `ext-json` and `ext-mbstring`. Framework
+- PHP 8.1+ (CI: 8.1–8.5; tests fail on any notice or deprecation), no runtime dependencies in `src/` except `ext-json` and `ext-mbstring`. Framework
   packages go to `require-dev` / `suggest` only.
 - Output must stay deterministic. Expected output lives in `tests/Fixtures/expected/`; after an
   intended change run `UPDATE_GOLDEN=1 composer test` and review the diff.

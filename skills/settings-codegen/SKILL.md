@@ -15,7 +15,8 @@ configuration) and run `generate`. Manual edits are overwritten and `--check` fa
 
 ## Install
 
-Dev dependency only; production uses the committed generated classes. Until the package is on
+Requires PHP 8.1+ (tested on 8.1–8.5). Dev dependency only; production uses the committed
+generated classes. Until the package is on
 Packagist, install from GitHub:
 
 ```bash
