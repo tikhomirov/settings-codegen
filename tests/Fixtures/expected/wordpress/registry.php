@@ -14,4 +14,11 @@ return [
         'internal_token',
     ],
     'Notes' => [],
+    'Shop' => [
+        'enabled',
+        'api_key',
+        'timeout',
+        'newsletter_enabled',
+        'newsletter_lists',
+    ],
 ];

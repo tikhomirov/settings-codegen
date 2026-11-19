@@ -1,120 +1,202 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "settings-codegen module schema",
-    "description": "A list of setting entries. Entries with both \"id\" and \"property\" become typed properties; other entries (titles, section ends, info blocks) are UI-only. Unknown keys are allowed and passed through to UI schemas.",
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "id": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Storage key / option id. Unique within the module."
-            },
-            "property": {
-                "type": "string",
-                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
-                "description": "Property name in the generated Config class. Unique within the module."
-            },
-            "php_type": {
-                "enum": [
-                    "string",
-                    "int",
-                    "float",
-                    "bool",
-                    "array"
-                ],
-                "default": "string",
-                "description": "Type of the generated property."
-            },
-            "default": {
-                "description": "Default value; should match php_type (see the strict_defaults option)."
-            },
-            "type": {
-                "type": "string",
-                "description": "WordPress: WooCommerce field type (text, checkbox, select, title, sectionend, ...)."
-            },
-            "title": {
-                "type": [
-                    "string",
-                    "boolean"
-                ],
-                "description": "WordPress: translated with __()."
-            },
-            "desc": {
-                "type": "string",
-                "description": "WordPress: translated; formatted with desc_args_expr when present."
-            },
-            "desc_tip": {
-                "type": [
-                    "string",
-                    "boolean"
-                ]
-            },
-            "text": {
-                "type": "string"
-            },
-            "placeholder": {
-                "type": [
-                    "string",
-                    "boolean"
-                ]
-            },
-            "button_text": {
-                "type": [
-                    "string",
-                    "boolean"
-                ]
-            },
-            "options": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "description": "WordPress: value => label; labels are translated."
-            },
-            "options_expr": {
-                "type": "string",
-                "minLength": 1,
-                "description": "PHP expression emitted verbatim as \"options\"."
-            },
-            "depends_expr": {
-                "type": "string",
-                "minLength": 1,
-                "description": "PHP expression emitted verbatim as \"depends\"."
-            },
-            "desc_args_expr": {
-                "type": "array",
-                "items": {
+    "description": "Settings of one module. Either the structured format: an object with \"fields\" and/or \"sections\" (a section is a title with nested fields, no explicit sectionend), or the flat list format: a JSON array of entries. Entries with both \"id\" and \"property\" become typed properties; other entries are UI-only. Unknown keys are allowed and passed through to UI schemas.",
+    "oneOf": [
+        {
+            "title": "Structured format",
+            "type": "object",
+            "properties": {
+                "$schema": {
                     "type": "string"
                 },
-                "description": "PHP expressions passed to sprintf() together with the translated desc."
-            },
-            "text_args_expr": {
-                "type": "array",
-                "items": {
-                    "type": "string"
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/field"
+                    },
+                    "description": "Fields outside of any section."
+                },
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/section"
+                    }
                 }
             },
-            "ui": {
-                "type": [
-                    "boolean",
-                    "object"
-                ],
-                "description": "false: keep the setting out of the WordPress UI schema. Objects are free-form metadata for other adapters."
-            },
-            "rules": {
-                "description": "Validation rules passed through to {Module}Definition::rules() (Laravel/Symfony/Yii3)."
+            "anyOf": [
+                {
+                    "required": [
+                        "fields"
+                    ]
+                },
+                {
+                    "required": [
+                        "sections"
+                    ]
+                }
+            ],
+            "additionalProperties": false
+        },
+        {
+            "title": "Flat list format",
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/field"
             }
+        }
+    ],
+    "$defs": {
+        "field": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Storage key / option id. Unique within the module."
+                },
+                "property": {
+                    "description": "Property name in the generated Config class. Unique within the module. Structured format: optional (camelCase of the storage key), false = UI-only field.",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                        },
+                        {
+                            "const": false
+                        }
+                    ]
+                },
+                "php_type": {
+                    "enum": [
+                        "string",
+                        "int",
+                        "float",
+                        "bool",
+                        "array"
+                    ],
+                    "default": "string",
+                    "description": "Type of the generated property. List format: defaults to string. Structured format: inferred from \"default\"."
+                },
+                "default": {
+                    "description": "Default value; should match php_type (see the strict_defaults option)."
+                },
+                "type": {
+                    "type": "string",
+                    "description": "WordPress: WooCommerce field type (text, checkbox, select, title, sectionend, ...)."
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "boolean"
+                    ],
+                    "description": "WordPress: translated with __()."
+                },
+                "desc": {
+                    "type": "string",
+                    "description": "WordPress: translated; formatted with desc_args_expr when present."
+                },
+                "desc_tip": {
+                    "type": [
+                        "string",
+                        "boolean"
+                    ]
+                },
+                "text": {
+                    "type": "string"
+                },
+                "placeholder": {
+                    "type": [
+                        "string",
+                        "boolean"
+                    ]
+                },
+                "button_text": {
+                    "type": [
+                        "string",
+                        "boolean"
+                    ]
+                },
+                "options": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": [
+                            "string",
+                            "number"
+                        ]
+                    },
+                    "description": "WordPress: value => label; labels are translated."
+                },
+                "options_expr": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "PHP expression emitted verbatim as \"options\"."
+                },
+                "depends_expr": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "PHP expression emitted verbatim as \"depends\"."
+                },
+                "desc_args_expr": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "PHP expressions passed to sprintf() together with the translated desc."
+                },
+                "text_args_expr": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ui": {
+                    "type": [
+                        "boolean",
+                        "object"
+                    ],
+                    "description": "false: keep the setting out of the WordPress UI schema. Objects are free-form metadata for other adapters."
+                },
+                "rules": {
+                    "description": "Validation rules passed through to {Module}Definition::rules() (Laravel/Symfony/Yii3)."
+                }
+            },
+            "dependentRequired": {
+                "property": [
+                    "id"
+                ]
+            },
+            "additionalProperties": true
         },
-        "dependentRequired": {
-            "property": [
-                "id"
-            ]
-        },
-        "additionalProperties": true
+        "section": {
+            "type": "object",
+            "description": "Becomes a WooCommerce \"title\" entry (all keys except \"fields\"), the fields, and a \"sectionend\" with the same id.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional section id (title and sectionend)."
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "boolean"
+                    ]
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/field"
+                    }
+                }
+            },
+            "required": [
+                "fields"
+            ],
+            "additionalProperties": true
+        }
     }
 }

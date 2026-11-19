@@ -26,11 +26,11 @@ final class CliTest extends TestCase
     {
         [$code, , $err] = $this->run_('--check', '--config=laravel.json');
         $this->assertSame(Application::EXIT_OUTDATED, $code);
-        $this->assertStringContainsString('outdated (4 of 4 files)', $err);
+        $this->assertStringContainsString('outdated (6 of 6 files)', $err);
 
         [$code, $out] = $this->run_('generate', '--config=laravel.json');
         $this->assertSame(Application::EXIT_OK, $code);
-        $this->assertStringContainsString('Generated 4 changed of 4 files from 2 schemas.', $out);
+        $this->assertStringContainsString('Generated 6 changed of 6 files from 3 schemas.', $out);
 
         [$code, $out] = $this->run_('check', '--config=laravel.json');
         $this->assertSame(Application::EXIT_OK, $code);

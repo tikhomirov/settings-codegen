@@ -6,6 +6,7 @@ namespace Tikhomirov\SettingsCodegen\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Tikhomirov\SettingsCodegen\Schema\SchemaNormalizer;
 use Tikhomirov\SettingsCodegen\Schema\SchemaValidator;
 
 final class SchemaValidatorTest extends TestCase
@@ -65,9 +66,13 @@ final class SchemaValidatorTest extends TestCase
         $schema = json_decode((string) file_get_contents(__DIR__ . '/../../resources/settings.schema.json'), true, 512, JSON_THROW_ON_ERROR);
 
         $this->assertIsArray($schema);
-        $this->assertSame(['string', 'int', 'float', 'bool', 'array'], $schema['items']['properties']['php_type']['enum']);
+        $field = $schema['$defs']['field']['properties'];
+        $this->assertSame(['string', 'int', 'float', 'bool', 'array'], $field['php_type']['enum']);
         foreach (['id', 'property', 'default', 'options_expr', 'depends_expr', 'desc_args_expr', 'text_args_expr', 'ui', 'rules'] as $key) {
-            $this->assertArrayHasKey($key, $schema['items']['properties']);
+            $this->assertArrayHasKey($key, $field);
         }
+        $this->assertSame(['$schema', 'fields', 'sections'], array_keys($schema['oneOf'][0]['properties']));
+        $this->assertSame(SchemaNormalizer::ROOT_KEYS, array_keys($schema['oneOf'][0]['properties']));
+        $this->assertSame(['fields'], $schema['$defs']['section']['required']);
     }
 }

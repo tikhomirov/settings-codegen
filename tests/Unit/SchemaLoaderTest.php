@@ -61,7 +61,7 @@ final class SchemaLoaderTest extends TestCase
         $config = new CodegenConfig($this->project->dir, ['schemas' => ['modules/**/settings.json', 'modules/*/settings.json']]);
         $files = array_map(fn (string $f): string => $config->relative($f), (new SchemaLoader($config))->discover());
 
-        $this->assertSame(['modules/Delivery/settings.json', 'modules/Notes/settings.json'], $files);
+        $this->assertSame(['modules/Delivery/settings.json', 'modules/Notes/settings.json', 'modules/Shop/settings.json'], $files);
     }
 
     public function testDuplicateModuleNames(): void
@@ -117,7 +117,7 @@ final class SchemaLoaderTest extends TestCase
             'schemas' => ['modules/*/settings.json'],
         ])))->build();
 
-        $this->assertCount(2, $files);
+        $this->assertCount(3, $files);
         $this->assertStringEndsWith('modules/Delivery/keys.txt', $files[0]->path);
         $this->assertStringContainsString('shop_rest_time', $files[0]->contents);
     }

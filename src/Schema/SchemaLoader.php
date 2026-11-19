@@ -74,12 +74,30 @@ final class SchemaLoader
             throw new SchemaException("Invalid JSON in {$relative}: {$e->getMessage()}", 0, $e);
         }
 
+        $structured = SchemaNormalizer::isStructured($data);
+        $paths = [];
+
+        if (is_array($data) && $structured) {
+            $expanded = $this->normalizer()->expand($data);
+
+            if ($expanded['errors'] !== []) {
+                throw SchemaException::invalid($relative, $expanded['errors']);
+            }
+
+            [$data, $paths] = [$expanded['entries'], $expanded['paths']];
+        }
+
         $source = $data;
         $data = $this->applyAliases($data);
+
+        if ($structured) {
+            $data = $this->normalizer()->complete(self::objects($data));
+        }
+
         $errors = ($this->validator ?? new SchemaValidator())->validate($data);
 
         if ($errors !== []) {
-            throw SchemaException::invalid($relative, $errors);
+            throw SchemaException::invalid($relative, self::sourcePaths($errors, $paths));
         }
 
         $entries = self::objects($data);
@@ -112,6 +130,31 @@ final class SchemaLoader
         }
 
         return new Module($name, $file, $relative, $entries, $settings, self::objects($source));
+    }
+
+    private function normalizer(): SchemaNormalizer
+    {
+        return new SchemaNormalizer($this->storageKey(...), $this->config->string('adapter', 'wordpress') === 'wordpress');
+    }
+
+    /**
+     * Rewrites "[3].default: ..." to "sections[0].fields[1].default: ..." for structured schemas.
+     *
+     * @param list<string> $errors
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private static function sourcePaths(array $errors, array $paths): array
+    {
+        return array_map(
+            static fn (string $error): string => (string) preg_replace_callback(
+                '/^\[(\d+)\]/',
+                static fn (array $m): string => $paths[(int) $m[1]] ?? $m[0],
+                $error,
+            ),
+            $errors,
+        );
     }
 
     /**

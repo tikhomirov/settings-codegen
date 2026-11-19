@@ -24,7 +24,7 @@ final class SymfonyIntegrationTest extends TestCase
             $this->assertStringContainsString('outdated', $tester->getDisplay());
 
             $this->assertSame(0, $tester->execute(['--config' => 'symfony.json']));
-            $this->assertStringContainsString('Generated 4 changed of 4 files.', $tester->getDisplay());
+            $this->assertStringContainsString('Generated 6 changed of 6 files.', $tester->getDisplay());
 
             $this->assertSame(0, $tester->execute(['--check' => true, '--config' => 'symfony.json']));
             $this->assertSame(2, $tester->execute(['--config' => 'missing.json']));

@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "title": "Shop API",
+            "desc": "Connection to the shop backend.",
+            "fields": [
+                { "id": "enabled", "title": "Enable integration", "default": true },
+                { "id": "api_key", "title": "API key", "default": "", "rules": ["required"] },
+                { "id": "timeout", "title": "Timeout, seconds", "default": 30, "rules": ["integer", "min:1"] }
+            ]
+        },
+        {
+            "id": "newsletter",
+            "title": "Newsletter",
+            "fields": [
+                { "id": "newsletter_enabled", "title": "Send newsletter", "default": false },
+                {
+                    "id": "newsletter_lists",
+                    "type": "multiselect",
+                    "title": "Mailing lists",
+                    "options": { "news": "News", "offers": "Offers" },
+                    "default": ["news"]
+                }
+            ]
+        }
+    ]
+}
