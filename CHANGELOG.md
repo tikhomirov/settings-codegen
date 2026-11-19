@@ -19,3 +19,7 @@ All notable changes to this project are documented here. The format follows
   and a Yii3 `yiisoft/config` plugin.
 - Typed adapters: `string_cast` (`scalar`, `string`, `non_empty_string`) and `definition_fields`
   (`normalized`, `source`) options for migrating existing schemas without changing runtime behaviour.
+- Agent Skill `skills/settings-codegen/SKILL.md` (shipped in the Composer package) and `AGENTS.md`
+  for contributors; README section "For AI agents".
+- Quality gates: PHPStan level 9 without a baseline, 100% line, method and class coverage enforced
+  in CI (`composer coverage`, PHP 8.3 + pcov, `tools/coverage-check.php`).

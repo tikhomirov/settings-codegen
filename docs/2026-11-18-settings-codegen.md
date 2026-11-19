@@ -22,7 +22,8 @@ CI и README. Проверить совместимость с woo2iiko, нич�
      (`fields`, `defaults`, `rules`, `keys`); читатель (reader) настраивается.
 6. Консоль: `settings:generate` (symfony/console), `SettingsCodegenBundle`, config-plugin для Yii3.
 7. Тесты: эталонные файлы для всех адаптеров, исполнение сгенерированного кода, CLI и `--check`,
-   unit-тесты. PHPStan level 8. Workflow GitHub Actions на PHP 8.1–8.4.
+   unit-тесты. PHPStan level 9 (без baseline). Покрытие 100% (строки, методы, классы), проверка в CI.
+   Workflow GitHub Actions на PHP 8.1–8.4.
 8. Проверка на woo2iiko во временной копии (`/tmp`, удалена). Результат ниже.
 
 ## 3. Проверка на woo2iiko
@@ -69,3 +70,31 @@ CI и README. Проверить совместимость с woo2iiko, нич�
   именно их, а генератору они подаются алиасами `id`/`php_type`.
 
 Тесты: `tests/Integration/TypedAdapterOptionsTest.php`. Golden-файлы не менялись.
+
+## 6. Публикация и качество
+
+- Репозиторий: https://github.com/tikhomirov/settings-codegen (публичный). Тега и Packagist нет.
+- Ветка `feat/edakit-compat` влита в `main` обычным merge (`25bac55`), коммит `9e9e1a8` есть в
+  `origin/main` (на него ссылается composer.lock edakit). Локальная ветка удалена.
+- PHPStan level 9 без baseline и без ignore (`47dc77d`): типы сужены в коде, а не подавлены.
+- Покрытие 100% строк (820/820), методов (124/124) и классов, без `@codeCoverageIgnore`.
+  Symfony-пакеты в `require-dev`, бандл и консольная команда тоже покрыты. В CI отдельный job
+  на PHP 8.3 с pcov: `tools/coverage-check.php` валит сборку при покрытии ниже 100%.
+  Локально: `composer coverage`.
+- Удалён мёртвый код: `CodegenConfig::has/get/lines`, `Codegen::config()`, `Module::hasSettings()`.
+- README: бейджи (CI, coverage 100%, PHPStan 9), установка из VCS, справка по CLI и кодам выхода,
+  все четыре адаптера, `string_cast` / `definition_fields`, раздел «For AI agents».
+- Agent Skill `skills/settings-codegen/SKILL.md` входит в dist-архив; `AGENTS.md` для работы над
+  самим пакетом (в dist не входит).
+- `actions/checkout` обновлён до v5.
+
+Коммиты этапа:
+
+- 47dc77d refactor: raise PHPStan to level 9
+- 25bac55 Merge branch 'feat/edakit-compat'
+- 2e9c63c test: reach 100% line, method and class coverage and enforce it in CI
+- 1417fe8 docs: complete README with badges, CLI reference and development checks
+- 4bb84e7 docs: add settings-codegen Agent Skill, AGENTS.md and README section for AI agents
+
+CI для `4bb84e7`: все jobs зелёные (PHP 8.1–8.4, lowest 8.1, PHPStan, Coverage) —
+https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
