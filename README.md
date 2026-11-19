@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/logo.png" alt="settings-codegen" width="640"></p>
+<p align="center"><img src="docs/assets/logo.jpg" alt="settings-codegen: a settings array turned into a typed Config" width="100%"></p>
 
 <p align="center"><b>Describe settings once in <code>settings.json</code> — get typed PHP classes, admin UI fields and validation, checked in CI.</b></p>
 

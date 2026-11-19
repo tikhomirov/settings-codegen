@@ -114,7 +114,7 @@ https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
 
 ## 8. README: зачем нужен пакет (2026-11-19)
 
-- Верх README переписан: эмблема `docs/assets/logo.png` (1280×720, pngquant, 185 КБ, в dist не входит),
+- Верх README переписан: баннер `docs/assets/logo.jpg` (карандашный рисунок, 1280×720, JPEG q90, 195 КБ, в dist не входит; первый вариант `logo.png` заменён отдельным коммитом),
   одна строка-суть, бейджи, «The problem», «The solution: schema first» (до/после на примере
   DeliveryCalendar: settings.json → `generate` → реальный вывод адаптера wordpress, сокращённый →
   `$config->restTime`, unit-тест без БД), Mermaid-схема, «Why use it», ссылка на статью.

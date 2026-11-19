@@ -26,5 +26,5 @@ All notable changes to this project are documented here. The format follows
 - PHP 8.5 support: CI matrix PHP 8.1–8.5; PHPUnit fails on warnings, notices and deprecations,
   and CI runs the CLI for every adapter with `E_ALL` to catch deprecations.
 - README starts with the why: the problem, a before/after example with real generator output,
-  a Mermaid diagram, the benefits and a link to the full rationale; package logo
-  (`docs/assets/logo.png`, not in the dist archive).
+  a Mermaid diagram, the benefits and a link to the full rationale; package banner
+  (`docs/assets/logo.jpg`, not in the dist archive).
