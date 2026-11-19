@@ -1,5 +1,11 @@
 # settings-codegen
 
+[![CI](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
+[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/tikhomirov/settings-codegen/actions/workflows/ci.yml)
+[![PHPStan level 9](https://img.shields.io/badge/PHPStan-level%209-brightgreen)](phpstan.neon.dist)
+[![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4)](composer.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Schema-first settings for PHP. Describe the settings of a module once in `settings.json`, then
 generate:
 
@@ -19,10 +25,32 @@ The idea is described in detail (in Russian) in
 - Deterministic output: stable order and formatting. You don't need a code style fixer, but the
   output can match one (see `style`).
 
+## Contents
+
+- [Installation](#installation)
+- [The schema](#the-schema)
+- [Configuration](#configuration)
+- [Command line](#command-line)
+- [WordPress / WooCommerce](#wordpress--woocommerce)
+- [Laravel](#laravel)
+- [Symfony](#symfony)
+- [Yii3](#yii3)
+- [Custom reader](#custom-reader)
+- [Extensions and post steps](#extensions-and-post-steps)
+- [CI](#ci)
+- [Development](#development)
+
 ## Installation
 
 ```bash
 composer require --dev tikhomirov/settings-codegen
+```
+
+The package is not on Packagist yet. Until then, add the GitHub repository first:
+
+```bash
+composer config repositories.settings-codegen vcs https://github.com/tikhomirov/settings-codegen
+composer require --dev tikhomirov/settings-codegen:dev-main
 ```
 
 `require-dev` is enough: only the generated classes are used at runtime.
@@ -93,14 +121,8 @@ Put the configuration in `composer.json` under `extra.settings-codegen`, or in a
 }
 ```
 
-```bash
-vendor/bin/settings-codegen generate          # write changed files
-vendor/bin/settings-codegen generate --check  # exit 1 if anything is missing or outdated
-vendor/bin/settings-codegen --config=settings-codegen.json --working-dir=path/to/project
-```
-
-The module name is the directory that holds `settings.json`. Exit codes: `0` ok, `1` outdated
-(`--check`), `2` error (invalid schema or configuration).
+The module name is the directory that holds `settings.json`. Without `--config`, the CLI reads
+`settings-codegen.json` from the working directory and falls back to `composer.json`.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -128,6 +150,25 @@ The module name is the directory that holds `settings.json`. Exit codes: `0` ok,
 `align_arrows` aligns `=>` like php-cs-fixer/Pint `align_single_space_minimal`.
 `list_keys: true` and `"empty_array": "multiline"` reproduce the `var_export()` + Pint look of
 older generators byte for byte.
+
+## Command line
+
+```bash
+vendor/bin/settings-codegen generate          # write changed files
+vendor/bin/settings-codegen generate --check  # write nothing; exit 1 if anything is missing or outdated
+vendor/bin/settings-codegen check             # same as generate --check
+vendor/bin/settings-codegen generate --config=settings-codegen.json --working-dir=path/to/project
+vendor/bin/settings-codegen generate -q       # print errors only
+```
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | Everything is generated and up to date. |
+| `1` | `--check` only: some generated files are missing or outdated (listed in the output). |
+| `2` | Error: invalid schema, invalid configuration, unknown argument, or a file cannot be written. |
+
+Generated files are output, not source: never edit them by hand. Change `settings.json` (or the
+configuration) and run `generate` again.
 
 ## WordPress / WooCommerce
 
@@ -365,10 +406,17 @@ A completely different output is one class away: implement
 
 ```bash
 composer test      # PHPUnit: golden files for every adapter, runtime behaviour, CLI
-composer phpstan   # PHPStan level 8
+composer phpstan   # PHPStan level 9, no baseline
+composer coverage  # PHPUnit with pcov or Xdebug; fails below 100% lines, methods and classes
+composer check     # test + phpstan
 UPDATE_GOLDEN=1 composer test   # after an intended output change; review the diff
 ```
 
+CI runs the tests on PHP 8.1–8.4 (highest and lowest dependencies), PHPStan, and a coverage job
+on PHP 8.3 with pcov that fails if line, method or class coverage drops below 100%. The Symfony
+packages are in `require-dev`, so the bundle and the console command are covered too; there are no
+coverage exclusions.
+
 ## License
 
-MIT
+[MIT](LICENSE)
