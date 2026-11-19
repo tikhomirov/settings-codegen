@@ -1,6 +1,6 @@
 ---
 name: settings-codegen
-description: Use when a PHP project uses tikhomirov/settings-codegen (a settings.json next to Generated/*Config.php classes, or "settings-codegen" in composer.json) and you need to add, change or remove a setting, regenerate the classes, fix a failing `settings-codegen generate --check`, or set the package up for WordPress/WooCommerce, Laravel, Symfony, Yii3 or a custom adapter.
+description: Use when a PHP project uses tikhomirov/settings-codegen (a settings.json next to Generated/*Config.php classes, or "settings-codegen" in composer.json) and you need to add, change or remove a setting, regenerate the classes, fix a failing `settings-codegen generate --check`, or set the package up for WordPress/WooCommerce, Laravel, Symfony, Yii3, the MoonShine admin panel or a custom adapter.
 ---
 
 # settings-codegen
@@ -8,7 +8,8 @@ description: Use when a PHP project uses tikhomirov/settings-codegen (a settings
 Schema-first settings for PHP. Each module describes its settings once in `settings.json`; the
 generator writes a typed readonly `{Module}Config` class plus framework glue:
 `{Module}UiSchema` (WooCommerce Settings API) for WordPress, or `{Module}Definition`
-(`fields()`, `defaults()`, `rules()`, `keys()`) for Laravel, Symfony and Yii3.
+(`fields()`, `defaults()`, `rules()`, `keys()`) for Laravel, Symfony, Yii3 and MoonShine. The
+`moonshine` adapter also writes `{Module}Fields` (MoonShine form components).
 
 **Golden rule: never edit generated files by hand.** Change `settings.json` (or the codegen
 configuration) and run `generate`. Manual edits are overwritten and `--check` fails in CI.
@@ -32,9 +33,10 @@ composer require --dev tikhomirov/settings-codegen:dev-main
 | Laravel | `laravel` | `\Illuminate\Contracts\Config\Repository $config` |
 | Symfony | `symfony` | `ParameterBagInterface $parameters` |
 | Yii3 | `yii3` | `array $params` (dot-separated keys) |
+| MoonShine admin panel | `moonshine` | Laravel config repository, like `laravel`; plus `{Module}Fields` |
 | Anything else | FQCN of `Tikhomirov\SettingsCodegen\Adapter\AdapterInterface` | your code |
 
-The typed adapters (`laravel`, `symfony`, `yii3`) also accept a custom reader, e.g. a DB store:
+The typed adapters (`laravel`, `symfony`, `yii3`, `moonshine`) also accept a custom reader, e.g. a DB store:
 
 ```json
 {"reader": {"type": "\\App\\Settings\\SettingsStore", "variable": "store", "expression": "{var}->get({key})"}}
@@ -144,6 +146,19 @@ Exit codes: `0` up to date / written; `1` (`--check` only) files missing or outd
 `generate`; `2` error — invalid schema or configuration (the message names the file, entry index
 and key), unknown argument, or an unwritable path. Symfony with the bundle:
 `bin/console settings:generate [--check]`; Yii3: `./yii settings:generate [--check]`.
+
+## MoonShine fields
+
+`{Module}Fields::components()` returns MoonShine fields grouped into `Box` (or `Fieldset` with
+`"section": "fieldset"`) per section; `names()`, `values(Config)` and `input(array)` map between
+storage keys and form field names (`field_name` template: `{key}`, `{key_snake}`, `{property}`).
+The component comes from `ui.field` (switcher, text, textarea, markdown, number, select,
+password, email, url, color, date, phone, hidden, json), else the WooCommerce `type`, else the
+value (bool → Switcher, `options` → Select, array → Json, string → Text, int/float → Number).
+Labels: `ui.label` / `title`; hints: `ui.help` / `desc_tip` / `desc`; `rules: ["required"]` →
+`->required()`; `ui.attributes` / `custom_attributes`; `ui.show_when: {key, operator, value}`;
+`"ui": false` hides the field. An unknown `ui.field` fails generation (exit `2`).
+`moonshine/moonshine` (PHP 8.2+) is not a dependency of the package.
 
 ## Extensions and post steps
 

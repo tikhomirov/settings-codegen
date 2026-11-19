@@ -150,3 +150,29 @@ https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
 - README: «The problem» с WordPress и Laravel, «The solution» на модуле Shop (enabled, api_key,
   timeout, секция Newsletter) с реальным выводом адаптеров laravel и wordpress; схема Mermaid без
   изменений; раздел «The schema» описывает оба формата. Скилл обновлён.
+
+## 10. Адаптер MoonShine (2026-11-19)
+
+Задача: адаптер под админ-панель MoonShine — поля формы из схемы, дефолты, секции → Box/Fieldset,
+с опорой на то, как edakit строит поля (`AbstractSettingsModulePage::moduleField()`).
+
+- `MoonShineAdapter` (`adapter: "moonshine"`) наследует типизированный адаптер: те же Config и
+  Definition, читатель по умолчанию — Laravel config repository (MoonShine работает на Laravel),
+  `reader` переопределяется. Дополнительно `{Module}Fields`: `components()`, `names()`,
+  `values(Config)`, `input(array)`.
+- Логика из edakit перенесена в генерацию: `ui.field` (switcher/textarea/number/select/password/
+  color/text…), `ui.label`, `ui.help` → `hint`, `ui.options`, `ui.multiple`, `ui.attributes`
+  (только скалярные значения, как `htmlAttributes()`), `ui.show_when` → `showWhen()` по имени поля,
+  `ui.section` → секция. Плюс WooCommerce `type`, `title`/`desc_tip`/`desc`, `custom_attributes`,
+  `placeholder`, `rules: required`. Неизвестный `ui.field` — ошибка генерации (в edakit — молча Text).
+- Опции: `fields_suffix`, `field_name` (`{key}`, `{key_snake}`, `{property}`; для edakit —
+  `module_setting_{key_snake}`), `section` (`box`/`fieldset`), `translate` (`__`).
+- Почему MoonShine не в require-dev: `moonshine/moonshine` требует PHP 8.2+ и Laravel-компоненты,
+  а матрица начинается с 8.1 (и lowest на 8.1) — composer не поставил бы зависимости. Генератор
+  MoonShine не нужен (он пишет текст), поэтому покрытие 100% достигается без него. Реальный API
+  проверяется отдельным job «MoonShine API» на PHP 8.2–8.5: `composer require --dev
+  moonshine/moonshine` и PHPStan level 9 по эталонам `tests/Fixtures/expected/moonshine`
+  (`tests/MoonShine/phpstan.neon`). На 8.2 ставится MoonShine 4.21, на 8.5 — 5.0, оба без ошибок.
+  Создать поля в рантайме без загруженного ядра MoonShine нельзя (`Core::$instance`), поэтому
+  проверка статическая; проверено, что она ловит неверные методы и типы аргументов.
+- Тесты: эталоны для 4 модулей (включая edakit-стиль `moonshine/Panel`), `MoonShineAdapterTest`.

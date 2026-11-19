@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `moonshine` adapter: typed Config and Definition (Laravel config reader by default) plus
+  `{Module}Fields` with MoonShine form components (Switcher, Text, Textarea, Number, Select,
+  Password, Email, Url, Color, Date, Phone, Hidden, Json) grouped into Box/Fieldset sections,
+  defaults, hints, placeholders, `required`, custom attributes and `showWhen`, and
+  `names()` / `values()` / `input()` helpers. `moonshine/moonshine` is suggested only; CI checks
+  the generated code against MoonShine 4.x/5.x with PHPStan level 9 on PHP 8.2–8.5.
 - Structured `settings.json` format: an object with `fields` and nested `sections` (no explicit
   `sectionend`), `property` derived from the id (`"property": false` for UI-only fields),
   `php_type` inferred from `default`, and for WordPress a default field `type` and `"yes"`/`"no"`

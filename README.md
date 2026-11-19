@@ -202,7 +202,7 @@ flowchart LR
 - **Defaults and validation in one place**: `UiSchema::getFields()` / `Definition::defaults()` and `rules()` come from the same schema as the Config class.
 - **CI drift check** with `generate --check` (exit codes `0` / `1` / `2`).
 - **Zero runtime overhead.** A dev-only dependency: production runs plain generated PHP, cached by OPcache — no JSON parsing, no reflection.
-- **Framework-agnostic.** Adapters for WordPress/WooCommerce, Laravel, Symfony and Yii3, or your own `AdapterInterface`.
+- **Framework-agnostic.** Adapters for WordPress/WooCommerce, Laravel, Symfony, Yii3 and the MoonShine admin panel, or your own `AdapterInterface`.
 
 Read the full rationale (in Russian) →
 [“PHP settings architecture: why constants are a dead end, and why JSON”](https://rwsite.ru/php-settings-architecture-why-constants-are-a-dead-end-and-why-json/)
@@ -229,6 +229,7 @@ Read the full rationale (in Russian) →
 - [Laravel](#laravel)
 - [Symfony](#symfony)
 - [Yii3](#yii3)
+- [MoonShine](#moonshine)
 - [Custom reader](#custom-reader)
 - [Extensions and post steps](#extensions-and-post-steps)
 - [CI](#ci)
@@ -314,7 +315,7 @@ to `string`.
 | `php_type` | `string`, `int`, `float`, `bool`, `array`. Flat format: defaults to `string`; structured: inferred from `default`. |
 | `default` | Default value. With `strict_defaults` (on by default), it must match `php_type`. |
 | `ui` | `false` keeps a setting out of the WordPress UI schema. |
-| `rules` | Passed through to `Definition::rules()` (Laravel, Symfony, Yii3). |
+| `rules` | Passed through to `Definition::rules()` (Laravel, Symfony, Yii3, MoonShine). |
 | `desc_args_expr`, `text_args_expr` | WordPress: PHP expressions for `sprintf()` with the translated text. |
 | `options_expr`, `depends_expr` | WordPress: PHP expressions emitted as `options` / `depends`. |
 
@@ -350,7 +351,7 @@ The module name is the directory that holds `settings.json`. Without `--config`,
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `adapter` | `wordpress` | `wordpress`, `laravel`, `symfony`, `yii3`, or the FQCN of an `AdapterInterface`. |
+| `adapter` | `wordpress` | `wordpress`, `laravel`, `symfony`, `yii3`, `moonshine`, or the FQCN of an `AdapterInterface`. |
 | `schemas` | `["settings.json"]` | Glob patterns relative to the project. `**` is supported. |
 | `namespace` | `App\Settings\Generated` | Namespace of the generated classes. `{module}` is replaced. |
 | `output` | `{dir}/Generated` | Output directory. `{dir}` is the schema's directory, `{module}` the module name. |
@@ -464,7 +465,7 @@ DeliveryDefinition::fields();                       // raw schema entries, e.g. 
 
 Values that are missing or have the wrong type fall back to the schema default.
 
-Options of the typed adapters (`laravel`, `symfony`, `yii3`):
+Options of the typed adapters (`laravel`, `symfony`, `yii3`, `moonshine`):
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -545,6 +546,109 @@ return [
 ```bash
 ./yii settings:generate [--check]
 ```
+
+## MoonShine
+
+The `moonshine` adapter generates everything the `laravel` adapter does (`{Module}Config` with
+`load()` / `fromArray()` / `toArray()` and `{Module}Definition`) plus `{Module}Fields`: ready
+[MoonShine](https://moonshine-laravel.com) form components for an admin settings page.
+`moonshine/moonshine` is only suggested; the generated code is checked against the real MoonShine
+API (4.x and 5.x) in CI.
+
+```json
+{
+    "adapter": "moonshine",
+    "schemas": ["app/Settings/*/settings.json"],
+    "namespace": "App\\Settings\\{module}",
+    "output": "{dir}/Generated",
+    "key_prefix": "shop.",
+    "field_name": "settings_{key_snake}"
+}
+```
+
+For the [Shop schema above](#the-solution-schema-first) (real output, shortened):
+
+```php
+final class ShopFields
+{
+    /** @return list<\MoonShine\Contracts\UI\ComponentContract> */
+    public static function components(): array
+    {
+        return [
+            Box::make(\__('Shop API'), [
+                Switcher::make(\__('Enable integration'), 'settings_enabled')
+                    ->default(true),
+                Text::make(\__('API key'), 'settings_api_key')
+                    ->default('')
+                    ->required(),
+                Number::make(\__('Timeout, seconds'), 'settings_timeout')
+                    ->default(30),
+            ]),
+            Box::make(\__('Newsletter'), [
+                Switcher::make(\__('Send newsletter'), 'settings_newsletter_enabled')
+                    ->default(false),
+                Select::make(\__('Mailing lists'), 'settings_newsletter_lists')
+                    ->options([
+                        'news' => \__('News'),
+                        'offers' => \__('Offers'),
+                    ])
+                    ->multiple()
+                    ->default([
+                        'news',
+                    ]),
+            ]),
+        ];
+    }
+
+    public static function names(): array;                     // storage key => field name
+    public static function values(ShopConfig $config): array;  // field name => value
+    public static function input(array $input): array;         // submitted form => storage key => value
+}
+```
+
+```php
+// A MoonShine page
+protected function components(): iterable
+{
+    return [
+        FormBuilder::make()
+            ->fields(ShopFields::components())
+            ->fill(ShopFields::values(ShopConfig::load(app('config'))))
+            ->submit(__('Save')),
+    ];
+}
+
+// Saving: typed and validated with the same schema
+$config = ShopConfig::fromArray(ShopFields::input($request->all()));
+```
+
+Field component, in order of precedence:
+
+1. `ui.field`: `switcher`, `text`, `textarea`, `markdown` (Textarea), `number`, `select`,
+   `password`, `email`, `url`, `color`, `date`, `phone`, `hidden`, `json`. An unknown name is an error.
+2. The WooCommerce `type`: `checkbox` → Switcher, `multiselect` → multiple Select, `radio` → Select, …
+3. The value: `bool` → Switcher, `options` → Select (multiple for arrays), `array` → Json,
+   `string` → Text, `int` / `float` → Number.
+
+Other keys: label from `ui.label` or `title` (falls back to the property name), hint from
+`ui.help`, `desc_tip` or `desc`, `ui.placeholder` / `placeholder`, options from `ui.options` /
+`options` (a list becomes `0 => …, 1 => …`), `->required()` when `rules` contains `required`,
+`ui.attributes` / `custom_attributes` (scalar values) → `customAttributes()`, and
+`ui.show_when: {"key", "operator", "value"}` → `showWhen()` on the other field's name.
+`"ui": false` hides a setting from the form.
+
+Sections — `title` / `sectionend` entries, structured `sections`, or consecutive fields with the
+same `ui.section` — become `Box` components (`"section": "fieldset"` for `Fieldset`).
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `fields_suffix` | `Fields` | Class name suffix of the fields class. |
+| `field_name` | `{key}` | Form field name: `{key}` storage key, `{key_snake}` with non-alphanumerics replaced by `_`, `{property}`. |
+| `section` | `box` | `box` or `fieldset`. |
+| `translate` | `__` | Function wrapped around labels, hints, placeholders and option labels; `""` for plain strings. |
+
+All typed adapter options (`reader`, `key_prefix`, `string_cast`, …) apply to the Config class;
+the default reader is the Laravel config repository, which MoonShine runs on.
 
 ## Custom reader
 
