@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tikhomirov\SettingsCodegen\Php;
 
+use Tikhomirov\SettingsCodegen\Config\CodegenConfig;
+use Tikhomirov\SettingsCodegen\Config\ConfigException;
 use Tikhomirov\SettingsCodegen\Extension\AttributeSpec;
+use Tikhomirov\SettingsCodegen\Schema\Module;
 
 /**
  * Small helpers shared by adapters: file header, docblocks, imports and attributes.
@@ -68,6 +71,43 @@ final class ClassRenderer
         $short = $attribute->shortName();
 
         return $parts === [] ? "#[{$short}]" : "#[{$short}(" . implode(', ', $parts) . ')]';
+    }
+
+    /**
+     * Docblock lines from the "docs" option (string or list of strings) or the defaults,
+     * with {module}, {source} and {file} replaced.
+     *
+     * @param list<string> $default
+     *
+     * @return list<string>
+     */
+    public static function docLines(CodegenConfig $config, string $key, array $default, Module $module): array
+    {
+        $lines = $config->array('docs')[$key] ?? $default;
+
+        if (is_string($lines)) {
+            $lines = explode("\n", $lines);
+        }
+
+        if (! is_array($lines)) {
+            throw new ConfigException("Option \"docs.{$key}\" must be a string or a list of strings");
+        }
+
+        $vars = [
+            '{module}' => $module->name,
+            '{source}' => $module->relativeSourcePath,
+            '{file}' => basename($module->sourcePath),
+        ];
+        $result = [];
+
+        foreach ($lines as $line) {
+            if (! is_string($line)) {
+                throw new ConfigException("Option \"docs.{$key}\" must be a string or a list of strings");
+            }
+            $result[] = self::interpolate($line, $vars);
+        }
+
+        return $result;
     }
 
     /**

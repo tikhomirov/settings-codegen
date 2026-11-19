@@ -49,15 +49,14 @@ final class CodegenConfig
         $isComposer = basename($file) === 'composer.json';
 
         if ($isComposer) {
-            $extra = $data['extra'][self::EXTRA_KEY] ?? null;
+            $extra = is_array($data['extra'] ?? null) ? ($data['extra'][self::EXTRA_KEY] ?? null) : null;
             if (! is_array($extra)) {
                 throw new ConfigException("Missing \"extra.settings-codegen\" object in {$file}");
             }
             $data = $extra;
         }
 
-        /** @var array<string, mixed> $data */
-        return new self(dirname((string) realpath($file)), $data);
+        return new self(dirname((string) realpath($file)), self::object($data));
     }
 
     public function adapter(): string
@@ -139,9 +138,7 @@ final class CodegenConfig
             }
 
             $options = $step['options'] ?? [];
-            /** @var array<string, mixed> $options */
-            $options = is_array($options) ? $options : [];
-            $steps[] = ['class' => $step['class'], 'options' => $options];
+            $steps[] = ['class' => $step['class'], 'options' => is_array($options) ? self::object($options) : []];
         }
 
         return $steps;
@@ -241,14 +238,15 @@ final class CodegenConfig
             throw new ConfigException("Option \"{$key}\" must be a list of strings");
         }
 
+        $strings = [];
         foreach ($value as $item) {
             if (! is_string($item)) {
                 throw new ConfigException("Option \"{$key}\" must be a list of strings");
             }
+            $strings[] = $item;
         }
 
-        /** @var list<string> $value */
-        return $value;
+        return $strings;
     }
 
     /**
@@ -262,8 +260,24 @@ final class CodegenConfig
             throw new ConfigException("Option \"{$key}\" must be an object");
         }
 
-        /** @var array<string, mixed> $value */
-        return $value;
+        return self::object($value);
+    }
+
+    /**
+     * JSON object as an array with string keys (integer-like keys become strings).
+     *
+     * @param array<mixed> $value
+     *
+     * @return array<string, mixed>
+     */
+    private static function object(array $value): array
+    {
+        $object = [];
+        foreach ($value as $key => $item) {
+            $object[(string) $key] = $item;
+        }
+
+        return $object;
     }
 
     /**

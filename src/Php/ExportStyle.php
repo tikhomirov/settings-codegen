@@ -35,10 +35,30 @@ final class ExportStyle
     public static function fromArray(array $options): self
     {
         return new self(
-            alignArrows: (bool) ($options['align_arrows'] ?? false),
-            listKeys: (bool) ($options['list_keys'] ?? false),
-            emptyArray: (string) ($options['empty_array'] ?? self::EMPTY_INLINE),
-            indent: (string) ($options['indent'] ?? '    '),
+            alignArrows: self::bool($options, 'align_arrows'),
+            listKeys: self::bool($options, 'list_keys'),
+            emptyArray: self::string($options, 'empty_array', self::EMPTY_INLINE),
+            indent: self::string($options, 'indent', '    '),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function bool(array $options, string $key): bool
+    {
+        $value = $options[$key] ?? false;
+
+        return is_bool($value) ? $value : throw new \InvalidArgumentException("Option \"style.{$key}\" must be a boolean");
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function string(array $options, string $key, string $default): string
+    {
+        $value = $options[$key] ?? $default;
+
+        return is_string($value) ? $value : throw new \InvalidArgumentException("Option \"style.{$key}\" must be a string");
     }
 }

@@ -81,19 +81,29 @@ final class SchemaLoader
             throw SchemaException::invalid($relative, $errors);
         }
 
-        /** @var list<array<string, mixed>> $data */
+        $entries = [];
+        foreach (is_array($data) ? $data : [] as $entry) {
+            $object = [];
+            foreach (is_array($entry) ? $entry : [] as $key => $value) {
+                $object[(string) $key] = $value;
+            }
+            $entries[] = $object;
+        }
+
         $settings = [];
 
-        foreach ($data as $entry) {
-            if (! isset($entry['property'], $entry['id'])) {
+        foreach ($entries as $entry) {
+            $id = $entry['id'] ?? null;
+            $property = $entry['property'] ?? null;
+
+            if (! is_string($id) || ! is_string($property)) {
                 continue;
             }
 
-            $id = (string) $entry['id'];
             $settings[] = new Setting(
                 id: $id,
                 storageKey: $this->storageKey($id),
-                property: (string) $entry['property'],
+                property: $property,
                 type: PhpType::from(is_string($entry['php_type'] ?? null) ? $entry['php_type'] : 'string'),
                 hasDefault: array_key_exists('default', $entry),
                 default: $entry['default'] ?? null,
@@ -107,7 +117,7 @@ final class SchemaLoader
             throw new SchemaException("Module name \"{$name}\" derived from {$relative} is not a valid class name prefix. Use \"module_names\".");
         }
 
-        return new Module($name, $file, $relative, $data, $settings);
+        return new Module($name, $file, $relative, $entries, $settings);
     }
 
     public function storageKey(string $id): string
@@ -177,8 +187,7 @@ final class SchemaLoader
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($base, \FilesystemIterator::SKIP_DOTS));
 
         foreach ($iterator as $info) {
-            /** @var \SplFileInfo $info */
-            if ($info->isFile() && preg_match($regex, $info->getPathname()) === 1) {
+            if ($info instanceof \SplFileInfo && $info->isFile() && preg_match($regex, $info->getPathname()) === 1) {
                 $files[] = $info->getPathname();
             }
         }

@@ -112,7 +112,7 @@ final class Application
     {
         $data = json_decode((string) file_get_contents($file), true);
 
-        return is_array($data) && isset($data['extra'][CodegenConfig::EXTRA_KEY]);
+        return is_array($data) && is_array($data['extra'] ?? null) && isset($data['extra'][CodegenConfig::EXTRA_KEY]);
     }
 
     private function report(Result $result, bool $check, bool $quiet): int

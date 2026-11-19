@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tikhomirov\SettingsCodegen\Adapter\WordPress;
 
 use Tikhomirov\SettingsCodegen\Adapter\AdapterInterface;
+use Tikhomirov\SettingsCodegen\Config\CodegenConfig;
 use Tikhomirov\SettingsCodegen\Context;
 use Tikhomirov\SettingsCodegen\GeneratedFile;
 use Tikhomirov\SettingsCodegen\Php\ClassRenderer;
@@ -169,9 +170,9 @@ final class WordPressAdapter implements AdapterInterface
         $map = [];
 
         foreach ($module->entries as $entry) {
-            if (isset($entry['property'], $entry['id']) && is_string($entry['id']) && $entry['id'] !== '') {
+            if (is_string($entry['property'] ?? null) && is_string($entry['id'] ?? null) && $entry['id'] !== '') {
                 $optionKeys[] = [null, $exporter->string($entry['id'])];
-                $map[] = [$exporter->string((string) $entry['property']), $exporter->string($entry['id'])];
+                $map[] = [$exporter->string($entry['property']), $exporter->string($entry['id'])];
             }
 
             if (($entry['ui'] ?? true) === false) {
@@ -229,7 +230,7 @@ final class WordPressAdapter implements AdapterInterface
                 $code = $this->translate($this->stringify($value), $context);
                 $args = $field[$key . '_args_expr'] ?? null;
                 if (is_array($args)) {
-                    $code = '\\sprintf(' . $code . ', ' . implode(', ', array_map('strval', $args)) . ')';
+                    $code = '\\sprintf(' . $code . ', ' . implode(', ', array_filter($args, 'is_string')) . ')';
                 }
             } elseif ($key === 'options' && is_array($value)) {
                 $options = [];
@@ -270,19 +271,8 @@ final class WordPressAdapter implements AdapterInterface
     /**
      * @return list<string>
      */
-    private function doc(\Tikhomirov\SettingsCodegen\Config\CodegenConfig $config, string $key, Module $module): array
+    private function doc(CodegenConfig $config, string $key, Module $module): array
     {
-        $docs = $config->array('docs');
-        $lines = $docs[$key] ?? self::DOCS[$key];
-        $lines = is_string($lines) ? explode("\n", $lines) : (array) $lines;
-
-        return array_map(
-            static fn (mixed $line): string => ClassRenderer::interpolate((string) $line, [
-                '{module}' => $module->name,
-                '{source}' => $module->relativeSourcePath,
-                '{file}' => basename($module->sourcePath),
-            ]),
-            array_values($lines),
-        );
+        return ClassRenderer::docLines($config, $key, self::DOCS[$key] ?? [], $module);
     }
 }

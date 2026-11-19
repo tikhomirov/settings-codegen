@@ -92,18 +92,20 @@ abstract class TypedConfigAdapter implements AdapterInterface
      */
     protected function reader(CodegenConfig $config): array
     {
-        $reader = array_merge($this->defaultReader(), $config->array('reader'));
+        $options = array_merge($this->defaultReader(), $config->array('reader'));
+        $value = static function (string $key) use ($options): string {
+            $value = $options[$key] ?? null;
 
-        foreach (['type', 'variable', 'expression'] as $key) {
-            if (! is_string($reader[$key] ?? null) || $reader[$key] === '') {
-                throw new ConfigException("Option \"reader.{$key}\" must be a non-empty string");
-            }
-        }
+            return is_string($value) && $value !== ''
+                ? $value
+                : throw new ConfigException("Option \"reader.{$key}\" must be a non-empty string");
+        };
 
-        /** @var array{type: string, variable: string, expression: string} $reader */
-        $reader['variable'] = ltrim($reader['variable'], '$');
-
-        return $reader;
+        return [
+            'type' => $value('type'),
+            'variable' => ltrim($value('variable'), '$'),
+            'expression' => $value('expression'),
+        ];
     }
 
     private function configClass(Module $module, Context $context): string
@@ -280,17 +282,6 @@ abstract class TypedConfigAdapter implements AdapterInterface
      */
     protected function doc(CodegenConfig $config, string $key, Module $module): array
     {
-        $docs = $config->array('docs');
-        $lines = $docs[$key] ?? self::DOCS[$key] ?? [];
-        $lines = is_string($lines) ? explode("\n", $lines) : (array) $lines;
-
-        return array_map(
-            static fn (mixed $line): string => ClassRenderer::interpolate((string) $line, [
-                '{module}' => $module->name,
-                '{source}' => $module->relativeSourcePath,
-                '{file}' => basename($module->sourcePath),
-            ]),
-            array_values($lines),
-        );
+        return ClassRenderer::docLines($config, $key, self::DOCS[$key] ?? [], $module);
     }
 }
