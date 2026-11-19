@@ -46,6 +46,31 @@ jobs:
           done
           if [ -s stderr.txt ]; then cat stderr.txt; exit 1; fi
 
+  moonshine:
+    name: MoonShine API (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # moonshine/moonshine requires PHP 8.2+, so it is not in require-dev (the 8.1 jobs could not install it).
+        php: ['8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Install MoonShine
+        run: composer require --dev --no-interaction --no-progress moonshine/moonshine
+
+      - name: Generated MoonShine fields match the MoonShine API (PHPStan level 9)
+        run: vendor/bin/phpstan analyse -c tests/MoonShine/phpstan.neon --no-progress --memory-limit=1G
+
   static-analysis:
     name: PHPStan
     runs-on: ubuntu-latest

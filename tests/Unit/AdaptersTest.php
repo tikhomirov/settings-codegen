@@ -7,6 +7,7 @@ namespace Tikhomirov\SettingsCodegen\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Tikhomirov\SettingsCodegen\Adapter\AdapterRegistry;
 use Tikhomirov\SettingsCodegen\Adapter\Laravel\LaravelAdapter;
+use Tikhomirov\SettingsCodegen\Adapter\MoonShine\MoonShineAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\Symfony\SymfonyAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\WordPress\WordPressAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\Yii3\Yii3Adapter;
@@ -21,9 +22,9 @@ final class AdaptersTest extends TestCase
 {
     public function testRegistryNamesAndReservedKeys(): void
     {
-        $this->assertSame(['wordpress', 'laravel', 'symfony', 'yii3'], AdapterRegistry::names());
+        $this->assertSame(['wordpress', 'laravel', 'symfony', 'yii3', 'moonshine'], AdapterRegistry::names());
 
-        foreach ([WordPressAdapter::class, LaravelAdapter::class, SymfonyAdapter::class, Yii3Adapter::class] as $class) {
+        foreach ([WordPressAdapter::class, LaravelAdapter::class, SymfonyAdapter::class, Yii3Adapter::class, MoonShineAdapter::class] as $class) {
             $adapter = AdapterRegistry::create($class::name());
             $this->assertInstanceOf($class, $adapter);
             $this->assertInstanceOf($class, AdapterRegistry::create(strtoupper($class::name())));
@@ -31,6 +32,7 @@ final class AdaptersTest extends TestCase
         }
 
         $this->assertContains('options_expr', (new WordPressAdapter())->reservedKeys());
+        $this->assertContains('ui', (new MoonShineAdapter())->reservedKeys());
     }
 
     public function testAbstractExtensionIsNoOp(): void

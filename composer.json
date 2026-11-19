@@ -23,6 +23,7 @@
         "symfony/http-kernel": "^6.4 || ^7.0"
     },
     "suggest": {
+        "moonshine/moonshine": "Use the generated {Module}Fields components in a MoonShine admin panel (moonshine adapter, PHP 8.2+).",
         "symfony/console": "Run generation as a console command (Symfony bundle or Yii3 console).",
         "symfony/http-kernel": "Register SettingsCodegenBundle in a Symfony application.",
         "yiisoft/config": "Pick up the bundled config-plugin in a Yii3 application.",

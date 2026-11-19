@@ -23,7 +23,7 @@ final class GoldenFilesTest extends TestCase
      */
     public static function configs(): iterable
     {
-        foreach (['wordpress', 'wordpress-pint', 'laravel', 'symfony', 'yii3', 'custom-reader'] as $config) {
+        foreach (['wordpress', 'wordpress-pint', 'laravel', 'symfony', 'yii3', 'custom-reader', 'moonshine'] as $config) {
             yield $config => [$config];
         }
     }

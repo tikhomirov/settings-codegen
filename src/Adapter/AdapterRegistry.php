@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tikhomirov\SettingsCodegen\Adapter;
 
 use Tikhomirov\SettingsCodegen\Adapter\Laravel\LaravelAdapter;
+use Tikhomirov\SettingsCodegen\Adapter\MoonShine\MoonShineAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\Symfony\SymfonyAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\WordPress\WordPressAdapter;
 use Tikhomirov\SettingsCodegen\Adapter\Yii3\Yii3Adapter;
@@ -21,6 +22,7 @@ final class AdapterRegistry
         'laravel' => LaravelAdapter::class,
         'symfony' => SymfonyAdapter::class,
         'yii3' => Yii3Adapter::class,
+        'moonshine' => MoonShineAdapter::class,
     ];
 
     /**

@@ -1,0 +1,10 @@
+# Checks the generated MoonShine fields against the real MoonShine API.
+# Needs moonshine/moonshine installed (CI job "MoonShine"): composer require --dev moonshine/moonshine
+parameters:
+    level: 9
+    paths:
+        - ../Fixtures/expected/moonshine
+    bootstrapFiles:
+        - bootstrap.php
+    phpVersion: 80200
+    tmpDir: ../../build/phpstan-moonshine

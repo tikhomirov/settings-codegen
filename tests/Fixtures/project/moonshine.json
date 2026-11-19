@@ -1,0 +1,14 @@
+{
+    "adapter": "moonshine",
+    "schemas": [
+        "modules/*/settings.json",
+        "moonshine/*/settings.json"
+    ],
+    "namespace": "Fixture\\MoonShine\\{module}",
+    "output": "build/moonshine/{module}",
+    "key_prefix": "settings.",
+    "strip_prefixes": [
+        "shop_"
+    ],
+    "field_name": "setting_{key_snake}"
+}
