@@ -246,7 +246,7 @@ The package is not on Packagist yet. Until then, add the GitHub repository first
 
 ```bash
 composer config repositories.settings-codegen vcs https://github.com/tikhomirov/settings-codegen
-composer require --dev tikhomirov/settings-codegen:dev-main
+composer require --dev tikhomirov/settings-codegen:^0.1
 ```
 
 `require-dev` is enough: only the generated classes are used at runtime.

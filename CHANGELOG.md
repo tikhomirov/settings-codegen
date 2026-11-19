@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-19
+
+First release.
+
 ### Added
 
 - `moonshine` adapter: typed Config and Definition (Laravel config reader by default) plus
@@ -39,3 +43,6 @@ All notable changes to this project are documented here. The format follows
   a before/after example in the structured format with real generator output,
   a Mermaid diagram, the benefits and a link to the full rationale; package banner
   (`docs/assets/logo.jpg`, not in the dist archive).
+
+[Unreleased]: https://github.com/tikhomirov/settings-codegen/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tikhomirov/settings-codegen/releases/tag/v0.1.0

@@ -22,7 +22,7 @@ Packagist, install from GitHub:
 
 ```bash
 composer config repositories.settings-codegen vcs https://github.com/tikhomirov/settings-codegen
-composer require --dev tikhomirov/settings-codegen:dev-main
+composer require --dev tikhomirov/settings-codegen:^0.1
 ```
 
 ## Pick an adapter

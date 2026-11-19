@@ -176,3 +176,9 @@ https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
   Создать поля в рантайме без загруженного ядра MoonShine нельзя (`Core::$instance`), поэтому
   проверка статическая; проверено, что она ловит неверные методы и типы аргументов.
 - Тесты: эталоны для 4 модулей (включая edakit-стиль `moonshine/Panel`), `MoonShineAdapterTest`.
+
+## 11. Релиз v0.1.0 (2026-11-19)
+
+- CHANGELOG: `Unreleased` → `[0.1.0] - 2026-11-19`, ссылки на сравнение и релиз.
+- README и скилл: установка `tikhomirov/settings-codegen:^0.1` из VCS-репозитория (Packagist пока нет).
+- Annotated tag `v0.1.0` на коммите релиза и GitHub Release с заметками из CHANGELOG.
