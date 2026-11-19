@@ -74,6 +74,7 @@ final class SchemaLoader
             throw new SchemaException("Invalid JSON in {$relative}: {$e->getMessage()}", 0, $e);
         }
 
+        $source = $data;
         $data = $this->applyAliases($data);
         $errors = ($this->validator ?? new SchemaValidator())->validate($data);
 
@@ -107,7 +108,8 @@ final class SchemaLoader
             throw new SchemaException("Module name \"{$name}\" derived from {$relative} is not a valid class name prefix. Use \"module_names\".");
         }
 
-        return new Module($name, $file, $relative, $data, $settings);
+        /** @var list<array<string, mixed>> $source */
+        return new Module($name, $file, $relative, $data, $settings, $source);
     }
 
     public function storageKey(string $id): string

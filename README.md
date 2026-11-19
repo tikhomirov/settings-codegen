@@ -199,6 +199,20 @@ DeliveryDefinition::fields();                       // raw schema entries, e.g. 
 
 Values that are missing or have the wrong type fall back to the schema default.
 
+Options of the typed adapters (`laravel`, `symfony`, `yii3`):
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `reader` | adapter specific | `{"type", "variable", "expression"}` of `load()`, see [Custom reader](#custom-reader). |
+| `key_prefix` | `""` | Prepended to the storage key in `load()`. |
+| `config_suffix` / `definition_suffix` | `Config` / `Definition` | Class name suffixes. |
+| `definition` | `true` | Generate the Definition class. |
+| `string_cast` | `scalar` | `scalar`: any scalar becomes a string; `string`: only strings; `non_empty_string`: only non-empty strings, `""` falls back to the default. |
+| `definition_fields` | `normalized` | `Definition::fields()` entries after `key_aliases` (`normalized`) or exactly as written in `settings.json` (`source`). |
+
+`definition_fields: "source"` together with `key_aliases` lets an existing schema with its own key
+names (for example `key` / `type`) keep the same `fields()` output that runtime code already reads.
+
 ## Symfony
 
 ```json

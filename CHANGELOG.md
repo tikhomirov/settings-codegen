@@ -17,3 +17,5 @@ All notable changes to this project are documented here. The format follows
 - Extension API (reserved keys, validation, class and property attributes) and post steps.
 - `bin/settings-codegen generate [--check]`, a Symfony console command with an optional bundle,
   and a Yii3 `yiisoft/config` plugin.
+- Typed adapters: `string_cast` (`scalar`, `string`, `non_empty_string`) and `definition_fields`
+  (`normalized`, `source`) options for migrating existing schemas without changing runtime behaviour.

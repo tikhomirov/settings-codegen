@@ -22,7 +22,8 @@ use Tikhomirov\SettingsCodegen\Schema\Setting;
  *  - {Module}Definition: raw fields, defaults, validation rules and property => key map.
  *
  * Options: reader {type, variable, expression}, key_prefix, config_suffix, definition_suffix,
- * definition (bool), readonly_class, docs.
+ * definition (bool), readonly_class, docs, string_cast ("scalar" | "string" | "non_empty_string"),
+ * definition_fields ("normalized" | "source").
  */
 abstract class TypedConfigAdapter implements AdapterInterface
 {
@@ -114,6 +115,7 @@ abstract class TypedConfigAdapter implements AdapterInterface
         $reader = $this->reader($config);
         $prefix = $config->string('key_prefix', '');
         $readonlyClass = $config->bool('readonly_class', true);
+        $stringCast = self::choice($config, 'string_cast', ['scalar', 'string', 'non_empty_string']);
         $class = $this->configClassName($module, $config);
 
         $imports = [];
@@ -185,7 +187,7 @@ abstract class TypedConfigAdapter implements AdapterInterface
 
         foreach (PhpType::cases() as $type) {
             if (isset($usedTypes[$type->value])) {
-                $out .= "\n" . self::castHelper($type);
+                $out .= "\n" . self::castHelper($type, $stringCast);
             }
         }
 
@@ -202,8 +204,11 @@ abstract class TypedConfigAdapter implements AdapterInterface
         $exporter = $context->exporter;
         $renderer = $context->renderer;
 
+        $entries = self::choice($config, 'definition_fields', ['normalized', 'source']) === 'source'
+            ? $module->sourceEntries
+            : $module->entries;
         $fields = [];
-        foreach ($module->entries as $entry) {
+        foreach ($entries as $entry) {
             $fields[] = [null, $exporter->value($entry, 3)];
         }
 
@@ -255,11 +260,35 @@ abstract class TypedConfigAdapter implements AdapterInterface
         };
     }
 
-    private static function castHelper(PhpType $type): string
+    /**
+     * @param list<string> $allowed First value is the default.
+     */
+    private static function choice(CodegenConfig $config, string $key, array $allowed): string
     {
+        $value = $config->string($key, $allowed[0]);
+
+        if (! in_array($value, $allowed, true)) {
+            throw new ConfigException("Option \"{$key}\" must be one of: " . implode(', ', $allowed));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param string $stringCast "scalar": any scalar is cast to string; "string": only strings;
+     *                           "non_empty_string": only non-empty strings, "" falls back to the default.
+     */
+    private static function castHelper(PhpType $type, string $stringCast = 'scalar'): string
+    {
+        $stringBody = match ($stringCast) {
+            'string' => 'is_string($value) ? $value : $default',
+            'non_empty_string' => "is_string(\$value) && \$value !== '' ? \$value : \$default",
+            default => 'is_scalar($value) ? (string) $value : $default',
+        };
+
         return match ($type) {
             PhpType::String => "    private static function string(mixed \$value, string \$default): string\n    {\n"
-                . "        return is_scalar(\$value) ? (string) \$value : \$default;\n    }\n",
+                . "        return {$stringBody};\n    }\n",
             PhpType::Int => "    private static function int(mixed \$value, int \$default): int\n    {\n"
                 . "        return is_numeric(\$value) ? (int) \$value : \$default;\n    }\n",
             PhpType::Float => "    private static function float(mixed \$value, float \$default): float\n    {\n"
