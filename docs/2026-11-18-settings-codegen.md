@@ -121,3 +121,32 @@ https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
   Установка, адаптеры, CLI и раздел для AI-агентов идут после.
 - Утверждения сверены с кодом: вывод получен реальным запуском генератора, ошибка PHPStan
   `Access to an undefined property` проверена на level 9.
+
+## 9. Упрощённый формат схемы и абстрактные примеры (2026-11-19)
+
+Задача: убрать «iiko»-примеры из README, показать «было» для WordPress и Laravel, упростить
+формат settings.json (id не везде, секции без явных start/end) с полной обратной совместимостью.
+
+Как было: корень — массив; `id` уже был необязателен для записей без `property`, но секции
+описывались парой `title` + `sectionend`, а у каждой настройки нужны `property` и `php_type`.
+
+Что сделано:
+
+- `SchemaNormalizer`: корень-объект `{"fields": [...], "sections": [{"title", "fields": [...]}]}`
+  разворачивается в тот же плоский список (title + поля + sectionend с id секции, если он задан).
+  `property` = camelCase ключа хранения (после `strip_prefixes`), `"property": false` — поле без
+  значения; `php_type` выводится из `default`; для WordPress — `type` (checkbox/number/text) и
+  `"yes"`/`"no"` для булевых чекбоксов. Ошибки указывают путь `sections[0].fields[1]`.
+- Почему так: объект в корне однозначно отличает новый формат от старого (массив), поэтому
+  старые схемы проходят без изменений и без флагов; вывод типов только в новом формате, чтобы
+  не поменять смысл старых файлов (там `php_type` по умолчанию `string`).
+- JSON Schema: `oneOf` из двух форматов, определения `field` и `section`.
+- Тесты: `SchemaNormalizerTest` (новый формат даёт байт-в-байт то же, что эквивалентный плоский,
+  для всех 4 адаптеров; ошибки; вывод типов), модуль-фикстура `Shop` в новом формате и его эталоны.
+  Старые эталоны не изменились. Покрытие 100%, PHPStan 9.
+- edakit: во временной копии с пакетом из рабочего дерева `composer generate:settings:check` —
+  «up to date (47 files, 23 schemas)», `generate` меняет 0 файлов, каталоги Generated идентичны.
+  Сам edakit не менялся.
+- README: «The problem» с WordPress и Laravel, «The solution» на модуле Shop (enabled, api_key,
+  timeout, секция Newsletter) с реальным выводом адаптеров laravel и wordpress; схема Mermaid без
+  изменений; раздел «The schema» описывает оба формата. Скилл обновлён.

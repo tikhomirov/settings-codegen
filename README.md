@@ -16,35 +16,74 @@
 
 ## The problem
 
-Settings in a growing PHP project tend to look like this:
+The two most popular ways to read settings in PHP look like this.
+
+**WordPress** — option names are strings, every value is `mixed`:
 
 ```php
-$restTime = get_option('iiko_rest_time', '00:30');                 // mixed
-$enabled  = get_option('iiko_enable_calendar', 'yes') === 'yes';   // "yes", "1", true, "on"…?
-$interval = (int) get_option('iiko_time_slot_interval', 30);       // cast again, everywhere
+$enabled = get_option('enabled', 'yes') === 'yes';   // "yes", "1", true, "on"…?
+$apiKey  = (string) get_option('api_key', '');
+$timeout = (int) get_option('timeout', 30);          // the default lives here…
+
+// …and once more in the settings page definition
+['id' => 'timeout', 'type' => 'number', 'title' => __('Timeout, seconds'), 'default' => 30],
 ```
 
-- **String keys everywhere.** A typo like `'iiko_rest_tiem'` silently returns the default; PHPStan can't see it.
+**Laravel** — `config()` / `env()` are no better:
+
+```php
+// config/shop.php
+return [
+    'enabled' => env('SHOP_ENABLED', true),
+    'api_key' => env('SHOP_API_KEY', ''),
+    'timeout' => env('SHOP_TIMEOUT', 30),
+];
+
+// somewhere in a service
+$timeout = (int) config('shop.timeout', 30);   // default repeated, cast by hand
+$apiKey  = config('shop.api_kye');             // typo: silently null, no tool notices
+```
+
+- **String keys everywhere.** A typo silently returns the default; PHPStan can't see it.
 - **Everything is `mixed`.** `get_option()` / `config()` return `"0"`, `0`, `false` or `"no"`, so every call site casts by hand.
-- **Defaults are duplicated.** `'00:30'` lives in the code *and* in the admin form definition. Change one, forget the other.
+- **Defaults are duplicated.** `30` lives in the code *and* in the admin form or config file. Change one, forget the other.
 - **A global `SettingsKey` constants class** gives autocomplete for key names only, stays `mixed`, and becomes a God Object every module depends on.
 - **UI and code drift apart.** The admin form, the validation rules and the code that reads the values are three separate lists.
 
 ## The solution: schema first
 
-**1. Describe the module once**, next to its code — `src/Features/DeliveryCalendar/settings.json`:
+**1. Describe the module once**, next to its code — `src/Shop/settings.json`. Only what matters:
+an `id`, a label and a default. The property name (`api_key` → `apiKey`) and the PHP type
+(`true` → `bool`, `30` → `int`) are derived; a section is just a title with nested fields.
 
 ```json
-[
-    {"id": "iiko_calendar_title", "type": "title", "title": "Delivery calendar"},
-    {"id": "iiko_enable_calendar", "property": "enableCalendar", "php_type": "bool",
-     "type": "checkbox", "title": "Enable delivery time picker", "default": "yes"},
-    {"id": "iiko_rest_time", "property": "restTime",
-     "type": "text", "title": "Order preparation time", "default": "00:30"},
-    {"id": "iiko_time_slot_duration", "property": "timeSlotDuration", "php_type": "int",
-     "type": "number", "title": "Time slot, minutes", "default": 30},
-    {"id": "iiko_calendar_end", "type": "sectionend"}
-]
+{
+    "sections": [
+        {
+            "title": "Shop API",
+            "desc": "Connection to the shop backend.",
+            "fields": [
+                { "id": "enabled", "title": "Enable integration", "default": true },
+                { "id": "api_key", "title": "API key", "default": "", "rules": ["required"] },
+                { "id": "timeout", "title": "Timeout, seconds", "default": 30, "rules": ["integer", "min:1"] }
+            ]
+        },
+        {
+            "id": "newsletter",
+            "title": "Newsletter",
+            "fields": [
+                { "id": "newsletter_enabled", "title": "Send newsletter", "default": false },
+                {
+                    "id": "newsletter_lists",
+                    "type": "multiselect",
+                    "title": "Mailing lists",
+                    "options": { "news": "News", "offers": "Offers" },
+                    "default": ["news"]
+                }
+            ]
+        }
+    ]
+}
 ```
 
 **2. Generate:**
@@ -53,67 +92,88 @@ $interval = (int) get_option('iiko_time_slot_interval', 30);       // cast again
 vendor/bin/settings-codegen generate
 ```
 
-**3. Get plain, committed PHP** (real output of the `wordpress` adapter, shortened):
+**3. Get plain, committed PHP.** Real output, shortened. With the `laravel` adapter
+(`"key_prefix": "shop."`):
 
 ```php
-final readonly class DeliveryCalendarConfig
+final readonly class ShopConfig
 {
     public function __construct(
-        public bool $enableCalendar,
-        public string $restTime,
-        public int $timeSlotDuration,
+        public bool $enabled,
+        public string $apiKey,
+        public int $timeout,
+        public bool $newsletterEnabled,
+        /** @var array<array-key, mixed> */
+        public array $newsletterLists,
     ) {}
 
+    public static function load(\Illuminate\Contracts\Config\Repository $config): self
+    {
+        return new self(
+            enabled: self::bool($config->get('shop.enabled'), true),
+            apiKey: self::string($config->get('shop.api_key'), ''),
+            timeout: self::int($config->get('shop.timeout'), 30),
+            newsletterEnabled: self::bool($config->get('shop.newsletter_enabled'), false),
+            newsletterLists: self::array($config->get('shop.newsletter_lists'), [
+                'news',
+            ]),
+        );
+    }
+    // fromArray(), toArray() and the typed casts
+}
+// + ShopDefinition: fields(), defaults(), rules(), keys()
+```
+
+With the `wordpress` adapter the same schema gives `load()` on top of `get_option()` and a
+WooCommerce settings array with both sections, `checkbox` / `text` / `number` field types and
+translated labels:
+
+```php
     public static function load(): self
     {
         return new self(
-            enableCalendar: self::asBool(\get_option('iiko_enable_calendar', 'yes')),
-            restTime: (string) \get_option('iiko_rest_time', '00:30'),
-            timeSlotDuration: (int) \get_option('iiko_time_slot_duration', 30),
+            enabled: self::asBool(\get_option('enabled', 'yes')),
+            apiKey: (string) \get_option('api_key', ''),
+            timeout: (int) \get_option('timeout', 30),
+            // ...
         );
     }
-    // toArray(), asBool()
-}
 
-final class DeliveryCalendarUiSchema
-{
-    public static function getFields(): array   // WooCommerce Settings API, ready for the settings tab
-    {
-        return [
-            // ...
-            ['id' => 'iiko_rest_time', 'title' => \__('Order preparation time', 'acme'), 'type' => 'text', 'default' => '00:30'],
-            // ...
-        ];
-    }
-    // getAllOptionKeys(), optionIdFor()
-}
+// ShopUiSchema::getFields()
+[
+    ['title' => \__('Shop API', 'shop'), 'desc' => \__('Connection to the shop backend.', 'shop'), 'type' => 'title'],
+    ['id' => 'enabled', 'title' => \__('Enable integration', 'shop'), 'type' => 'checkbox', 'default' => 'yes'],
+    ['id' => 'api_key', 'title' => \__('API key', 'shop'), 'type' => 'text', 'default' => ''],
+    ['id' => 'timeout', 'title' => \__('Timeout, seconds', 'shop'), 'type' => 'number', 'default' => 30],
+    ['type' => 'sectionend'],
+    // Newsletter section...
+]
 ```
 
 **4. Use typed values with full autocomplete:**
 
 ```php
-$config = DeliveryCalendarConfig::load();
+$shop = ShopConfig::load(app('config'));   // Laravel; WordPress: ShopConfig::load()
 
-if ($config->enableCalendar) {             // bool, not "yes"
-    $slots->build($config->restTime, $config->timeSlotDuration);
+if ($shop->enabled) {                      // bool, not "yes"
+    $client = new ShopClient($shop->apiKey, timeout: $shop->timeout);
 }
 
-$config->restTme;                          // PHPStan: Access to an undefined property
+$shop->apiKye;                             // PHPStan: Access to an undefined property
 
-add_filter('woocommerce_get_settings_acme', fn () => DeliveryCalendarUiSchema::getFields());
+$request->validate(ShopDefinition::rules());   // ['api_key' => ['required'], 'timeout' => [...]]
 ```
 
-Business code depends on a plain object, so unit tests need no database and no WordPress:
+Business code depends on a plain object, so unit tests need no database, no framework and no mocks:
 
 ```php
-public function test_calculates_slots(): void
+public function test_client_uses_configured_timeout(): void
 {
-    $config = new DeliveryCalendarConfig(enableCalendar: true, restTime: '01:00', timeSlotDuration: 30);
+    $shop = new ShopConfig(enabled: true, apiKey: 'test', timeout: 5, newsletterEnabled: false, newsletterLists: []);
 
-    $calculator = new CalendarSlotCalculator($config);   // your service
-    $slots = $calculator->calculateForDay(new DateTimeImmutable('2026-10-15'));
+    $client = ShopClient::fromConfig($shop);   // your code
 
-    $this->assertCount(16, $slots);
+    $this->assertSame(5, $client->timeout());
 }
 ```
 
@@ -135,6 +195,7 @@ flowchart LR
 ## Why use it
 
 - **Single source of truth.** Key, type, default, label and validation rules of a setting live in one JSON entry.
+- **Minimal schema.** `id`, label and `default` are enough: property names, PHP types and sections are derived.
 - **Type-safe DTOs.** `bool`, `int`, `float`, `string`, `array` properties in a `final readonly` class instead of `mixed`.
 - **100% IDE autocomplete** for every setting — no string keys in business code.
 - **PHPStan catches typos**: a misspelled property is an error, a misspelled string key never was.
@@ -191,47 +252,76 @@ composer require --dev tikhomirov/settings-codegen:dev-main
 
 ## The schema
 
-`settings.json` is a JSON array of entries. An entry with both `id` and `property` becomes a typed
-property. Other entries (titles, section ends, info blocks) appear only in UI schemas. Unknown keys
-are allowed: the WordPress adapter passes them through to WooCommerce.
+A module's `settings.json` comes in two formats. Both generate the same code.
+
+### Structured format (recommended)
+
+A JSON object with `fields` (outside of any section) and/or `sections`:
+
+```json
+{
+    "fields": [
+        { "id": "mode", "title": "Mode", "default": "live" }
+    ],
+    "sections": [
+        {
+            "id": "api",
+            "title": "API",
+            "desc": "Connection settings.",
+            "fields": [
+                { "id": "api_key", "title": "API key", "default": "" },
+                { "id": "timeout", "title": "Timeout, seconds", "default": 30 },
+                { "id": "token", "property": "secret", "php_type": "string", "ui": false },
+                { "id": "help", "type": "info", "text": "See the docs.", "property": false }
+            ]
+        }
+    ]
+}
+```
+
+- A **section** becomes a `title` entry (every section key except `fields`), its fields and a
+  `sectionend`. Its `id` is optional and is used for both the title and the end, as WooCommerce does.
+- A **field with an `id`** is a setting. `property` defaults to the camelCase of the storage key
+  (`api_key` → `apiKey`, after `strip_prefixes`); `"property": false` makes a UI-only field.
+- **`php_type`** is inferred from `default`: `true`/`false` → `bool`, `30` → `int`, `1.5` → `float`,
+  `[...]` → `array`, anything else (or no default) → `string`. Set it explicitly when needed.
+- **WordPress only:** a missing `type` becomes `checkbox` (bool), `number` (int, float) or `text`
+  (string); arrays need an explicit `type` such as `multiselect`. Boolean checkbox defaults are
+  written as `"yes"` / `"no"`, the way WooCommerce stores them.
+- Titles, sub-headings (`"type": "title"`) and other entries without a value need no `id`.
+
+### Flat list format
+
+A JSON array of WooCommerce-style entries, the original format. It is still fully supported and
+is passed through as is: nothing is inferred, `property` must be explicit and `php_type` defaults
+to `string`.
 
 ```json
 [
-    {"id": "shop_delivery_title", "type": "title", "title": "Delivery"},
-    {
-        "id": "shop_enable_calendar",
-        "property": "enableCalendar",
-        "php_type": "bool",
-        "type": "checkbox",
-        "title": "Enable delivery calendar",
-        "default": "yes"
-    },
-    {
-        "id": "shop_slot_minutes",
-        "property": "slotMinutes",
-        "php_type": "int",
-        "type": "number",
-        "title": "Slot length, minutes",
-        "default": 30,
-        "rules": ["integer", "min:5"]
-    },
-    {"id": "shop_delivery_end", "type": "sectionend"}
+    { "type": "title", "title": "API" },
+    { "id": "api_key", "property": "apiKey", "type": "text", "title": "API key", "default": "" },
+    { "id": "timeout", "property": "timeout", "php_type": "int", "type": "number", "title": "Timeout, seconds", "default": 30, "rules": ["integer", "min:1"] },
+    { "type": "sectionend" }
 ]
 ```
+
+### Keys
 
 | Key | Meaning |
 | --- | --- |
 | `id` | Storage key / option id, unique in the module. `strip_prefixes` removes prefixes from it for reading. |
-| `property` | Property name in the Config class. |
-| `php_type` | `string` (default), `int`, `float`, `bool`, `array`. |
+| `property` | Property name in the Config class. Structured format: optional, `false` = UI-only. |
+| `php_type` | `string`, `int`, `float`, `bool`, `array`. Flat format: defaults to `string`; structured: inferred from `default`. |
 | `default` | Default value. With `strict_defaults` (on by default), it must match `php_type`. |
 | `ui` | `false` keeps a setting out of the WordPress UI schema. |
 | `rules` | Passed through to `Definition::rules()` (Laravel, Symfony, Yii3). |
 | `desc_args_expr`, `text_args_expr` | WordPress: PHP expressions for `sprintf()` with the translated text. |
 | `options_expr`, `depends_expr` | WordPress: PHP expressions emitted as `options` / `depends`. |
 
-The JSON Schema for IDEs is in `vendor/tikhomirov/settings-codegen/resources/settings.schema.json`.
-The generator validates the same rules itself.
+Validation errors point to the place in the file, e.g. `sections[0].fields[1].default: expected a
+number for php_type "int"`. The JSON Schema for IDEs is in
+`vendor/tikhomirov/settings-codegen/resources/settings.schema.json` (add `"$schema"` to a
+structured file to get completion); the generator validates the same rules itself.
 
 ## Configuration
 

@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Structured `settings.json` format: an object with `fields` and nested `sections` (no explicit
+  `sectionend`), `property` derived from the id (`"property": false` for UI-only fields),
+  `php_type` inferred from `default`, and for WordPress a default field `type` and `"yes"`/`"no"`
+  checkbox defaults. The flat list format works unchanged; errors point to `sections[i].fields[j]`.
 - `settings.json` loader with validation (`resources/settings.schema.json` for IDEs), key aliases,
   prefix stripping and explicit module names.
 - Deterministic PHP exporter with optional Pint-compatible arrow alignment and `var_export` flavour.
@@ -25,6 +29,7 @@ All notable changes to this project are documented here. The format follows
   in CI (`composer coverage`, PHP 8.3 + pcov, `tools/coverage-check.php`).
 - PHP 8.5 support: CI matrix PHP 8.1–8.5; PHPUnit fails on warnings, notices and deprecations,
   and CI runs the CLI for every adapter with `E_ALL` to catch deprecations.
-- README starts with the why: the problem, a before/after example with real generator output,
+- README starts with the why: the problem (WordPress `get_option()` and Laravel `config()`/`env()`),
+  a before/after example in the structured format with real generator output,
   a Mermaid diagram, the benefits and a link to the full rationale; package banner
   (`docs/assets/logo.jpg`, not in the dist archive).

@@ -70,28 +70,58 @@ for 8.1), `style`, `string_cast` (`scalar` | `string` | `non_empty_string`), `de
 
 ## Add or change a setting
 
-Edit the module's `settings.json` (a JSON array; JSON Schema for IDEs:
-`vendor/tikhomirov/settings-codegen/resources/settings.schema.json`). An entry with both `id`
-and `property` becomes a typed property; entries without `property` (titles, section ends) are
-UI-only.
+Edit the module's `settings.json` (JSON Schema for IDEs:
+`vendor/tikhomirov/settings-codegen/resources/settings.schema.json`). First check which format
+the file uses and keep it:
+
+**Structured format** — a JSON object with `fields` and/or `sections` (prefer it for new files):
 
 ```json
 {
-    "id": "shop_slot_minutes",
-    "property": "slotMinutes",
-    "php_type": "int",
-    "type": "number",
-    "title": "Slot length, minutes",
-    "default": 30,
-    "rules": ["integer", "min:5"]
+    "sections": [
+        {
+            "title": "Shop API",
+            "fields": [
+                { "id": "enabled", "title": "Enable integration", "default": true },
+                { "id": "timeout", "title": "Timeout, seconds", "default": 30, "rules": ["integer", "min:1"] }
+            ]
+        }
+    ]
 }
 ```
 
+- A section is a title with nested `fields`; never add `sectionend` entries here. Its `id` is optional.
+- `property` is derived (camelCase of the storage key: `api_key` → `apiKey`); `"property": false`
+  makes a UI-only field. Titles and other value-less entries need no `id`.
+- `php_type` is inferred from `default` (`true` → `bool`, `30` → `int`, `1.5` → `float`,
+  `[]` → `array`, else `string`). Write `php_type` explicitly when the default does not show the
+  type (e.g. no default, or `"10"` meant as int).
+- WordPress: `type` defaults to `checkbox` / `number` / `text`; arrays need an explicit `type`.
+
+**Flat list format** — a JSON array (older files). Nothing is inferred: every setting needs
+`id` and `property`, `php_type` defaults to `string`, sections are explicit `title` /
+`sectionend` entries:
+
+```json
+{
+    "id": "timeout",
+    "property": "timeout",
+    "php_type": "int",
+    "type": "number",
+    "title": "Timeout, seconds",
+    "default": 30,
+    "rules": ["integer", "min:1"]
+}
+```
+
+Keys (both formats):
+
 - `id`: storage key / option id, unique in the module. Renaming it changes where the value is
   read from — existing stored values are not migrated.
-- `property`: camelCase PHP identifier, unique in the module. Renaming it is a breaking change
-  for code that reads `$config->property`.
-- `php_type`: `string` (default), `int`, `float`, `bool`, `array`.
+- `property`: camelCase PHP identifier, unique in the module. Renaming it (or, in the structured
+  format, renaming the `id` it is derived from) is a breaking change for code that reads
+  `$config->property`.
+- `php_type`: `string`, `int`, `float`, `bool`, `array`.
 - `default`: with `strict_defaults` it must fit `php_type`: `bool` accepts `true/false`,
   `0/1`, `"yes"/"no"`, `"on"/"off"`, `"true"/"false"`, `""`; `int`/`float` accept numbers or
   numeric strings; `array` needs an array; `string` any scalar. `null` is always allowed.
@@ -139,7 +169,10 @@ and key), unknown argument, or an unwritable path. Symfony with the bundle:
 - Changing `settings.json` without running `generate` — CI `--check` exits `1`.
 - A `default` that does not fit `php_type` (e.g. `"abc"` for `int`) — exit `2`. Fix the default;
   turn `strict_defaults` off only for legacy schemas.
-- Duplicate `id` or `property` in a module, or a `property` that is not a PHP identifier.
+- Duplicate `id` or `property` in a module, or a `property` that is not a PHP identifier
+  (structured format: two ids such as `a_b` and `a-b` derive the same property).
+- Mixing formats: `sectionend` entries or required `property` belong to the flat list format only.
+- Relying on inference where it guesses wrong: `"default": "10"` is a `string`; write `php_type`.
 - Generating `readonly class` for a PHP 8.1 project — set `"readonly_class": false`.
 - Custom keys used by your code but not claimed by an extension: they leak into the WordPress UI
   arrays.
@@ -147,7 +180,8 @@ and key), unknown argument, or an unwritable path. Symfony with the bundle:
 
 ## Checklist before commit
 
-1. `settings.json` is valid and every new setting has `id`, `property`, `php_type`, `default`.
+1. `settings.json` is valid; every new setting has an `id` and a `default` (flat format: also
+   `property` and `php_type`).
 2. `vendor/bin/settings-codegen generate` was run; generated files are staged with the schema.
 3. `vendor/bin/settings-codegen generate --check` exits `0`.
 4. Code reads the new value through `{Module}Config`, not raw option/config keys.
