@@ -98,3 +98,16 @@ CI и README. Проверить совместимость с woo2iiko, нич�
 
 CI для `4bb84e7`: все jobs зелёные (PHP 8.1–8.4, lowest 8.1, PHPStan, Coverage) —
 https://github.com/tikhomirov/settings-codegen/actions/runs/44481904977
+
+## 7. PHP 8.5 (2026-11-19)
+
+- Ограничение `"php": ">=8.1"` в composer.json уже пускает 8.5, менять не нужно.
+- Матрица CI: PHP 8.1, 8.2, 8.3, 8.4, 8.5 (highest) и 8.1 (lowest). PHPUnit теперь валит сборку
+  на warnings, notices и deprecations (`failOnNotice`, `failOnDeprecation`); в CI `error_reporting=-1`
+  и отдельный шаг запускает CLI для всех четырёх адаптеров и падает при любом выводе в stderr.
+- Падений и deprecations на 8.5 не нашлось, правок кода не потребовалось.
+- Коммиты: acf2a6f `ci: test on PHP 8.5 and fail on notices and deprecations`,
+  `docs: mention PHP 8.5 support in README, CHANGELOG, skill and AGENTS.md` (716cce8).
+- CI для 716cce8 зелёный на всех версиях:
+  https://github.com/tikhomirov/settings-codegen/actions/runs/44482441868
+  На 8.1 пропущено 7 тестов: сгенерированные readonly-классы требуют 8.2.
